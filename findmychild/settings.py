@@ -76,11 +76,11 @@ WSGI_APPLICATION = "findmychild.wsgi.application"
 DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',
-        'USER': 'postgres',
-        'PASSWORD': 'uG2GgUl4vJ4M40WLi0Gx',
-        'HOST': 'containers-us-west-107.railway.app',
-        'PORT': '8070',
+        'NAME': 'fyp_db',
+        'USER': 'arslan',
+        'PASSWORD': 'finalyearproject',
+        'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
+        'PORT': '5432',
     }
 }
 
