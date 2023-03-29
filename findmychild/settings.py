@@ -38,18 +38,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
+
     # Installed Packages
     'rest_framework',
     'drf_spectacular',
     "rest_framework.authtoken",
     'django_rest_passwordreset',
 
-    
+
     # custom apps
     'LoginApp',
     'FriendApp',
     'chatApp',
+    'lostchildren'
 ]
 
 MIDDLEWARE = [
@@ -142,9 +143,9 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
-MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-MEDIA_URL='/media/'
+MEDIA_URL = '/media/'
 
 AUTH_USER_MODEL = 'LoginApp.User'
 
