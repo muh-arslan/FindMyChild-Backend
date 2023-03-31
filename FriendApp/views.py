@@ -6,7 +6,7 @@ from .serializers import FriendListSerializer, RequestSerializer, FriendRequestS
 from rest_framework.response import Response
 from LoginApp.models import User
 from LoginApp.serializers import UserSerializer
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from chatApp.models import ChatThread
 from itertools import chain
@@ -15,6 +15,7 @@ from itertools import chain
 class ListAllFriendsView(ListAPIView):
     queryset = FriendList.objects.all()
     serializer_class = FriendListSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         obj = FriendList.objects.filter(user=request.user)
@@ -25,6 +26,7 @@ class ListAllFriendsView(ListAPIView):
 class SendFriendRequestView(CreateAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = RequestSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
@@ -37,6 +39,7 @@ class SendFriendRequestView(CreateAPIView):
 class ListAllFriendRequestView(ListAPIView):
     queryset = FriendRequest.objects.all()
     serializer_class = FriendRequestSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self,request):
         obj = FriendRequest.objects.filter(receiver=request.user)  
@@ -47,6 +50,7 @@ class ListAllFriendRequestView(ListAPIView):
         
 class AcceptRequestView(APIView):
     serializer_class = RequestSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request):
         try:
@@ -64,6 +68,7 @@ class AcceptRequestView(APIView):
         
 class DeleteRequestView(DestroyAPIView):
     serializer_class = RequestSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = FriendRequest.objects.all()
     lookup_field = 'id'
@@ -74,6 +79,7 @@ class DeleteRequestView(DestroyAPIView):
     
 class UnfriendView(APIView):
     serializer_class = RequestSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
         try:
@@ -89,6 +95,7 @@ class UnfriendView(APIView):
 class PeopleYouMayKnow(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get(self, request):

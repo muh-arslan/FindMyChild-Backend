@@ -23,7 +23,7 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
-        user.save()
+        user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password, **extra_fields):
@@ -81,7 +81,7 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
-        user.save()
+        user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password, **extra_fields):
@@ -105,28 +105,16 @@ class User(AbstractUser, BaseModel):
     first_name = models.CharField(max_length=256, null=True, blank=True)
     last_name = models.CharField(max_length=256, null=True, blank=True)
     profile_photo = models.ImageField(blank=True, upload_to='pictures')
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
+    class Meta:
+        db_table = 'users'
+
     def __str__(self):
         return self.email
 
-    class Meta:
-        db_table = 'auth_user'
-        # specify the table name in postgresql. 
-        # In PostgreSQL, table names are case-sensitive by default, 
-        # so we need to use quotes if our table name contains upper-case letters.
-        
-    def save(self, *args, **kwargs):
-        self.email = self.email.lower() # ensure all emails are lowercase
-        super().save(*args, **kwargs)
-
-    # update data types for PostgreSQL
-    def get_db_prep_save(self, value, connection):
-        value = super().get_db_prep_save(value, connection)
-        if isinstance(value, str):
-            return connection.Database.Binary(value.encode('utf-8'))
-        return value
 '''

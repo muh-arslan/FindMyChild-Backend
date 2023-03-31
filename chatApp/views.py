@@ -6,7 +6,7 @@ from .serializers import MessageSerializer, ChatThreadSerializer
 from rest_framework.response import Response
 from LoginApp.models import User
 from django.db.models import Q
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication,TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.renderers import JSONRenderer, MultiPartRenderer
@@ -16,6 +16,7 @@ from rest_framework.renderers import JSONRenderer, MultiPartRenderer
 class ListAllThreadOfLoggedUser(ListAPIView):
     queryset = ChatThread.objects.all()
     serializer_class = ChatThreadSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         # if you want to execute 'OR' in django query that is how
@@ -26,6 +27,7 @@ class ListAllThreadOfLoggedUser(ListAPIView):
 class ListAllMessagesInThread(ListAPIView):
     queryset = ChatThread.objects.all()
     serializer_class = MessageSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, chat_id):
         try:
@@ -43,6 +45,7 @@ class ListAllMessagesInThread(ListAPIView):
 class SendMessageInChatThread(ListCreateAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     # renderer_classes = [MultiPartRenderer]
     def post(self, request):

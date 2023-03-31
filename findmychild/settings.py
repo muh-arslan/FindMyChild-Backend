@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-_*loqh-za)p6r52#57gk1a4(%bnp3m(%pi2wb8m@p!#2na@t=^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -50,11 +50,14 @@ INSTALLED_APPS = [
     'LoginApp',
     'FriendApp',
     'chatApp',
-    'lostchildren'
+    'lostchildren',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # cors headers middlewares
+    'corsheaders.middleware.CorsMiddleware',
     # deploy on heroku
     'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -160,3 +163,13 @@ EMAIL_PORT = config('EMAIL_PORT')
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]

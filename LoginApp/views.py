@@ -53,6 +53,7 @@ class LoginView(APIView):
             print(request.user)
             response = dict()
             response["message"] = "User logged in succesfully"
+            response["status"] = "success"
             response["token"] = token[0].key
             return Response(response)
         except Exception as e:
@@ -60,6 +61,7 @@ class LoginView(APIView):
         
 class LogoutView(APIView):
     
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -71,6 +73,7 @@ class LogoutView(APIView):
 class ChangePasswordView(APIView):
     
     serializer_class = ChangePasswordSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
@@ -91,6 +94,7 @@ class ChangePasswordView(APIView):
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
