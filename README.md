@@ -10,3 +10,6 @@ pip install -r requirements.txt
 
 Username: admin@gmail.com
 Password: 1323arslan
+
+#Date: 31-03-2023
+#Cors Header package to connect with React added in the requirement.txt 
