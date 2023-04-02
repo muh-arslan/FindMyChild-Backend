@@ -5,7 +5,7 @@ from .views import LostChildList, LostChildDetail, FoundChildList, FoundChildDet
 router = routers.DefaultRouter()
 router.register(r'lost-children', LostChildList)
 router.register(r'lost-children/<int:pk>', LostChildDetail)
-router.register(r'found-children/', FoundChildList)
+router.register(r'found-children', FoundChildList)
 router.register(r'found-children/<int:pk>', FoundChildDetail)
 
 urlpatterns = [

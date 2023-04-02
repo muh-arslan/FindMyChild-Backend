@@ -8,7 +8,7 @@ from .models import LostChild, FoundChild
 def delete_child_images(instance, child_type):
     # Building the path to the directory containing the child's images
     dir_path = os.path.join(
-        'media', f'{child_type}_children_images', str(instance.id))
+        'media', f'Children/{child_type}_children_images', str(instance.id))
 
     # Deleting the directory and all its contents
     try:
