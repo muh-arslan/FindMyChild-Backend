@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from .models import LostChild
+from .models import LostChild, FoundChild
 
 
-class LostChildSerializer(serializers.ModelSerializer):
+class BaseChildSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LostChild
+        abstract = True
         fields = '__all__'
 
     def create(self, validated_data):
@@ -16,3 +16,13 @@ class LostChildSerializer(serializers.ModelSerializer):
         child.save()
         # Return the child object
         return child
+
+
+class LostChildSerializer(BaseChildSerializer):
+    class Meta(BaseChildSerializer.Meta):
+        model = LostChild
+
+
+class FoundChildSerializer(BaseChildSerializer):
+    class Meta(BaseChildSerializer.Meta):
+        model = FoundChild

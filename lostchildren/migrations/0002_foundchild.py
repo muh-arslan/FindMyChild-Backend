@@ -30,21 +30,21 @@ class Migration(migrations.Migration):
                 (
                     "image1",
                     models.ImageField(
-                        upload_to=lostchildren.models.get_child_image_upload_path
+                        upload_to=lostchildren.models.get_child_image_upload_path_found_child
                     ),
                 ),
                 (
                     "image2",
                     models.ImageField(
                         blank=True,
-                        upload_to=lostchildren.models.get_child_image_upload_path,
+                        upload_to=lostchildren.models.get_child_image_upload_path_found_child,
                     ),
                 ),
                 (
                     "image3",
                     models.ImageField(
                         blank=True,
-                        upload_to=lostchildren.models.get_child_image_upload_path,
+                        upload_to=lostchildren.models.get_child_image_upload_path_found_child,
                     ),
                 ),
                 ("image_encoding1", models.JSONField(blank=True, null=True)),
