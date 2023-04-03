@@ -4,6 +4,7 @@ import json
 from django.db import models
 from django.utils import timezone
 from uuid import uuid4
+from .face_recognition import feature_extraction
 
 
 def get_child_image_upload_path_lost_child(instance, filename):
@@ -58,8 +59,7 @@ class LostChild(BaseModel):
 
         encodings = []
         for path in image_paths:
-            image = face_recognition.load_image_file(path)
-            encoding = face_recognition.face_encodings(image)[0]
+            encoding = feature_extraction(path)
             encodings.append(encoding.tolist())
 
         if len(encodings) >= 1:
@@ -92,8 +92,7 @@ class FoundChild(BaseModel):
 
         encodings = []
         for path in image_paths:
-            image = face_recognition.load_image_file(path)
-            encoding = face_recognition.face_encodings(image)[0]
+            encoding = feature_extraction(path)
             encodings.append(encoding.tolist())
 
         if len(encodings) >= 1:

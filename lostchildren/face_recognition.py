@@ -1,11 +1,12 @@
 import cv2
 import face_recognition
 from keras_facenet import FaceNet
+from django.conf import settings
 
 
 def face_detection(image):
-    profile_cascade = cv2.CascadeClassifier(
-        'Models/haarcascade_profileface.xml')
+    model_path = settings.STATIC_URL + 'Models/haarcascade_profileface.xml'
+    profile_cascade = cv2.CascadeClassifier(model_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     profiles = profile_cascade.detectMultiScale(
         gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
@@ -27,7 +28,8 @@ def preprocess_image(image):
     return image
 
 
-def feature_extraction(image):
+def feature_extraction(image_path):
+    image = face_recognition.load_image_file(image_path)
     try:
         image_encoding = face_recognition.face_encodings(image)[0]
     except:
