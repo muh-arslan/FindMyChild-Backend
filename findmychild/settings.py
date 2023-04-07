@@ -29,7 +29,7 @@ DEBUG = False
 # ALLOWED_HOSTS = ['*']
 # DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
-ALLOWED_HOSTS = ['localhost', 'fypUser.pythonanywhere.com']
+ALLOWED_HOSTS = ['127.0.0.1','localhost', 'fypUser.pythonanywhere.com']
 ALLOWED_HOSTS.extend(
     filter(
         None,
