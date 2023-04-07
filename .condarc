@@ -1,0 +1,6 @@
+channel_alias: https://conda.anaconda.org
+default_channels:
+  - conda-forge
+  - defaults
+auto_activate_base: true
+notify_outdated_conda: False
