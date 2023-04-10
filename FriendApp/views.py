@@ -4,8 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView, DestroyAPIView
 from .serializers import FriendListSerializer, RequestSerializer, FriendRequestSerializer
 from rest_framework.response import Response
-from LoginApp.models import User
-from LoginApp.serializers import UserSerializer
+from login_app.models import User
+from login_app.serializers import UserSerializer
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from chatApp.models import ChatThread

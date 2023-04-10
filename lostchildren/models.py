@@ -1,9 +1,9 @@
 import json
-
 from django.db import models
 from django.utils import timezone
 from uuid import uuid4
 from .face_recognition import feature_extraction
+from login_app.models import User
 
 
 def get_child_image_upload_path_lost_child(instance, filename):
@@ -15,6 +15,12 @@ def get_child_image_upload_path_found_child(instance, filename):
 
 
 class BaseModel(models.Model):
+    STATUS_CHOICES = [
+        ('lost', 'Lost'),
+        ('found', 'Found'),
+        ('received', 'Received'),
+        ('resolved', 'Resolved')
+    ]
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     child_name = models.CharField(max_length=50)
     father_name = models.CharField(max_length=50)
@@ -48,6 +54,8 @@ class LostChild(BaseModel):
     image_encoding1 = models.JSONField(null=True, blank=True)
     image_encoding2 = models.JSONField(null=True, blank=True)
     image_encoding3 = models.JSONField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=BaseModel.STATUS_CHOICES, default='lost')
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lostReport', to_field='id')
 
     def generate_face_encodings(self):
         image_paths = [self.image1.path]
@@ -81,6 +89,8 @@ class FoundChild(BaseModel):
     image_encoding1 = models.JSONField(null=True, blank=True)
     image_encoding2 = models.JSONField(null=True, blank=True)
     image_encoding3 = models.JSONField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=BaseModel.STATUS_CHOICES, default='found')
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='foundReport', to_field='id')
 
     def generate_face_encodings(self):
         image_paths = [self.image1.path]

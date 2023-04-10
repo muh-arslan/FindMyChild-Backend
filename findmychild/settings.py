@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-_*loqh-za)p6r52#57gk1a4(%bnp3m(%pi2wb8m@p!#2na@t=^"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # ALLOWED_HOSTS = ['*']
 # DEBUG = bool(int(os.environ.get('DEBUG', 0)))
@@ -56,7 +56,7 @@ INSTALLED_APPS = [
 
 
     # custom apps
-    'LoginApp',
+    'login_app',
     'FriendApp',
     'chatApp',
     'lostchildren',
@@ -159,7 +159,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
 
-AUTH_USER_MODEL = 'LoginApp.User'
+AUTH_USER_MODEL = 'login_app.User'
 
 EMAIL_BACKEND = config('EMAIL_BACKEND')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS')

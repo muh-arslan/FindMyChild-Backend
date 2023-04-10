@@ -4,7 +4,7 @@ from .models import(
     FriendList,
     FriendRequest
 )
-from LoginApp.serializers import UserSerializer
+from login_app.serializers import UserSerializer
 from django.db import models
 
 

@@ -1,5 +1,5 @@
 from django.db import models
-from LoginApp.models import User
+from login_app.models import User
 from baseModel.base_model import BaseModel
 
 # Create your models here.

@@ -5,7 +5,7 @@ from .models import(
     ChatThread,
     photos
 )
-from LoginApp.serializers import UserSerializer
+from login_app.serializers import UserSerializer
 from django.db import models
 
 class PhotosSerializer(serializers.ModelSerializer):
