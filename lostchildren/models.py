@@ -2,7 +2,7 @@ import json
 from django.db import models
 from django.utils import timezone
 from uuid import uuid4
-from .face_recognition import feature_extraction
+from .face_recognizer import feature_extractor
 from login_app.models import User
 
 
@@ -54,8 +54,10 @@ class LostChild(BaseModel):
     image_encoding1 = models.JSONField(null=True, blank=True)
     image_encoding2 = models.JSONField(null=True, blank=True)
     image_encoding3 = models.JSONField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=BaseModel.STATUS_CHOICES, default='lost')
-    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lostReport', to_field='id')
+    status = models.CharField(
+        max_length=20, choices=BaseModel.STATUS_CHOICES, default='lost')
+    reporter = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='lostReport', to_field='id')
 
     def generate_face_encodings(self):
         image_paths = [self.image1.path]
@@ -64,16 +66,13 @@ class LostChild(BaseModel):
         if self.image3:
             image_paths.append(self.image3.path)
 
-        encodings = []
-        for path in image_paths:
-            encoding = feature_extraction(path)
-            encodings.append(encoding.tolist())
+        encodings = [feature_extractor(path).tolist() for path in image_paths]
 
-        if len(encodings) >= 1:
+        if encodings[0] is not None:
             self.image_encoding1 = json.dumps(encodings[0])
-        if len(encodings) >= 2:
+        if encodings[1] is not None:
             self.image_encoding2 = json.dumps(encodings[1])
-        if len(encodings) >= 3:
+        if encodings[2] is not None:
             self.image_encoding3 = json.dumps(encodings[2])
 
 
@@ -89,8 +88,10 @@ class FoundChild(BaseModel):
     image_encoding1 = models.JSONField(null=True, blank=True)
     image_encoding2 = models.JSONField(null=True, blank=True)
     image_encoding3 = models.JSONField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=BaseModel.STATUS_CHOICES, default='found')
-    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='foundReport', to_field='id')
+    status = models.CharField(
+        max_length=20, choices=BaseModel.STATUS_CHOICES, default='found')
+    reporter = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='foundReport', to_field='id')
 
     def generate_face_encodings(self):
         image_paths = [self.image1.path]
@@ -99,14 +100,11 @@ class FoundChild(BaseModel):
         if self.image3:
             image_paths.append(self.image3.path)
 
-        encodings = []
-        for path in image_paths:
-            encoding = feature_extraction(path)
-            encodings.append(encoding.tolist())
+        encodings = [feature_extractor(path).tolist() for path in image_paths]
 
-        if len(encodings) >= 1:
+        if encodings[0] is not None:
             self.image_encoding1 = json.dumps(encodings[0])
-        if len(encodings) >= 2:
+        if encodings[1] is not None:
             self.image_encoding2 = json.dumps(encodings[1])
-        if len(encodings) >= 3:
+        if encodings[2] is not None:
             self.image_encoding3 = json.dumps(encodings[2])
