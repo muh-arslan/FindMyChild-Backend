@@ -1,20 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from .models import LostChild, FoundChild
-from rest_framework import viewsets
+from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .serializers import LostChildSerializer, FoundChildSerializer
+from .face_recognizer import feature_extractor, match_results
 
 
 class LostChildList(viewsets.ModelViewSet):
-    queryset = LostChild.objects.all()
-    serializer_class = LostChildSerializer
-
-
-class LostChildDetail(viewsets.ModelViewSet):
     queryset = LostChild.objects.all()
     serializer_class = LostChildSerializer
 
@@ -24,9 +19,37 @@ class FoundChildList(viewsets.ModelViewSet):
     serializer_class = FoundChildSerializer
 
 
-class FoundChildDetail(viewsets.ModelViewSet):
-    queryset = FoundChild.objects.all()
-    serializer_class = FoundChildSerializer
+class MatchedReports(APIView):
+    # permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        # extract image from the request
+        image = request.data.get('image', None)
+        if not image:
+            return JsonResponse({'error': 'Image not found'}, status=400)
+
+        # extract encodings of the uploaded image
+        image_encoding = feature_extractor(image)
+
+        # get all lost or found reports depending on the type of the uploaded report
+        if request.data.get('type') == 'lost':
+            queryset = FoundChild.objects.all()
+        else:
+            queryset = LostChild.objects.all()
+
+        # iterate through all reports and check for matching faces
+        matched_reports = []
+        for report in queryset:
+            report_encoding = report.face_encoding
+            if report_encoding and match_results(image_encoding, report_encoding):
+                matched_reports.append(report)
+
+        # serialize the matched reports and return as JSON
+        serializer = LostChildSerializer(matched_reports, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
+    def get(self, request, format=None):
+        return Response({'message': 'GET request received'}, status=status.HTTP_200_OK)
 
 
 class ReceivedChildList(APIView):
@@ -45,6 +68,7 @@ class ReceivedChildList(APIView):
             *found_serializer.data
         ]
         return Response(data, status=status.HTTP_200_OK)
+
 
 """class ReportListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -91,6 +115,7 @@ class ReportDetailView(APIView):
         report = self.get_object(pk)
         report.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)"""
+
 
 class LostReportsList(generics.ListCreateAPIView):
     serializer_class = LostChildSerializer
@@ -142,4 +167,3 @@ class FoundReportsDetail(generics.RetrieveUpdateDestroyAPIView):
         queryset = self.get_queryset()
         obj = get_object_or_404(queryset, id=self.kwargs["pk"])
         return obj
-
