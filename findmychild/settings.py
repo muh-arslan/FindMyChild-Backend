@@ -182,3 +182,12 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
+
+#Waitress Config
+try:
+    import waitress
+except ImportError:
+    pass
+else:
+    # Use waitress as the default WSGI server
+    INSTALLED_APPS = ['waitress.server'] + INSTALLED_APPS
