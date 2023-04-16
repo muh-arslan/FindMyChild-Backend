@@ -21,6 +21,7 @@ from django.core.mail import EmailMessage
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+import random
 # Create your views here.
     
 class RegisterUserView(CreateAPIView):
@@ -28,16 +29,61 @@ class RegisterUserView(CreateAPIView):
     serializer_class = UserSerializer
     
     
+    # def post(self, request):
+    #     response = dict()
+    #     user_serializer = self.serializer_class(data=request.data, context={'request': request})
+    #     if user_serializer.is_valid():
+    #         user = user_serializer.save()
+    #         response["email"] = user.email
+    #         response["message"] = "User registered successfully"
+    #         return Response(response)
+    #     else:
+    #         return Response({"message": "invalid values entered"})
+
     def post(self, request):
-        response = dict()
         user_serializer = self.serializer_class(data=request.data, context={'request': request})
+        print(user_serializer)
+        if request.data:
+            #email = user_serializer.validated_data['email']
+            email = request.data['email']
+            # Generate a random 6-digit code and store it in the user's session
+            code = random.randint(10000, 99999)
+            request.session['registration_code'] = code
+            request.session['registration_email'] = email
+            # Send the code to the user's email address
+            # send_mail(
+            #     'Registration Code',
+            #     f'Your registration code is: {code}',
+            #     'noreply@example.com',
+            #     [email],
+            #     fail_silently=False,
+            # )
+            return Response({"message": "A 6-digit code has been sent to your email address", "code": code})
+        else:
+            return Response({"message": "Invalid email address"})
+
+    def put(self, request):
+        # Check if the user has a registration code in their session
+        code = request.session.get('registration_code')
+        email = request.session.get('registration_email')
+        if not code or not email:
+            return Response({"message": "No registration in progress"})
+        
+        # Verify that the code provided by the user matches the code in the session
+        code_received = request.data.get('code')
+        if not code_received or str(code_received) != str(code):
+            return Response({"message": "Invalid code"})
+        data1 = request.data
+        del data1['code']
+        # Create the user account
+        user_serializer = self.serializer_class(data=data1, context={'request': request})
+        print(user_serializer.is_valid())
         if user_serializer.is_valid():
             user = user_serializer.save()
-            response["email"] = user.email
-            response["message"] = "User registered successfully"
-            return Response(response)
+            request.session.flush()
+            return Response({"message": "User registered successfully"})
         else:
-            return Response({"message": "invalid values entered"})
+            return Response({"message": "Invalid password"})
             
     
 class LoginView(APIView):
@@ -114,12 +160,3 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     url = "http://127.0.0.1:8000/api/password_reset/confirm/" + "?token=" + reset_password_token.key
     email = EmailMessage('Password change request', url, to=[reset_password_token.user.email])
     email.send()
-
-        
-        
-        
-    
-        
-    
-    
-    
