@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
 from .models import LostChild, FoundChild
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
@@ -20,13 +19,12 @@ class FoundChildList(viewsets.ModelViewSet):
 
 
 class MatchedReports(APIView):
-    # permission_classes = (IsAuthenticated,)
 
     def post(self, request, format=None):
         # extract image from the request
         image = request.data.get('image', None)
         if not image:
-            return JsonResponse({'error': 'Image not found'}, status=400)
+            return Response({'error': 'Image not found'}, status=400)
 
         # extract encodings of the uploaded image
         image_encoding = feature_extractor(image)
@@ -40,16 +38,14 @@ class MatchedReports(APIView):
         # iterate through all reports and check for matching faces
         matched_reports = []
         for report in queryset:
-            report_encoding = report.face_encoding
+            report_encoding = report.image_encoding1
             if report_encoding and match_results(image_encoding, report_encoding):
                 matched_reports.append(report)
 
         # serialize the matched reports and return as JSON
         serializer = LostChildSerializer(matched_reports, many=True)
-        return JsonResponse(serializer.data, safe=False)
-
-    def get(self, request, format=None):
-        return Response({'message': 'GET request received'}, status=status.HTTP_200_OK)
+        print(serializer.data)
+        return Response(serializer.data)
 
 
 class ReceivedChildList(APIView):
