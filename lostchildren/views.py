@@ -1,7 +1,6 @@
 import json
 import numpy as np
 from django.shortcuts import get_object_or_404
-from django.db.models import Prefetch
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
