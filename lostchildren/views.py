@@ -23,21 +23,31 @@ class FoundChildList(viewsets.ModelViewSet):
 class MatchedReports(APIView):
 
     def post(self, request, format=None):
-        # extract image from the request
-        image = request.data.get('image', None)
-        if not image:
-            return Response({'error': 'Image not found'}, status=400)
+        # get id of the FoundChild or LostChild object
+        id = request.data.get('id', None)
+        if not id:
+            return Response({'error': 'Object id not found'}, status=400)
 
-        # extract encodings of the uploaded image
-        image_encoding = feature_extractor(image)
+        # check if object exists
 
-        # get all lost or found reports depending on the type of the uploaded report
-        flag = True
         if request.data.get('type') == 'lost':
-            queryset = FoundChild.objects.all()
-        else:
+            flag = True
+            try:
+                child = LostChild.objects.get(id=id)
+                queryset = FoundChild.objects.all()
+            except FoundChild.DoesNotExist:
+                return Response({'error': 'Object not found'}, status=404)
+
+        if request.data.get('type') == 'found':
             flag = False
-            queryset = LostChild.objects.all()
+            try:
+                child = FoundChild.objects.get(id=id)
+                queryset = LostChild.objects.all()
+            except LostChild.DoesNotExist:
+                return Response({'error': 'Object not found'}, status=404)
+
+        # get image encoding of the child
+        image_encoding = np.array(json.loads(child.image_encoding))
 
         # iterate through all reports and check for matching faces
         matched_reports = []
@@ -46,9 +56,11 @@ class MatchedReports(APIView):
                 report_encoding = np.array(json.loads(report.image_encoding))
             else:
                 report_encoding = None
-            print(type(report_encoding), type(image_encoding))
-            if report_encoding is not None and np.all(match_results(image_encoding, report_encoding)):
-                matched_reports.append(report)
+
+            if child.gender == report.gender:
+                print(report.child_name)
+                if report_encoding is not None and np.all(match_results(image_encoding, report_encoding)):
+                    matched_reports.append(report)
 
         # serialize the matched reports and return as JSON
         if flag:

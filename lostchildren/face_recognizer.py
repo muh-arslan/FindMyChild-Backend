@@ -47,6 +47,8 @@ def match_results(image1_encoding, image2_encoding):
     try:
         result = face_recognition.compare_faces(
             [image1_encoding], image2_encoding)
+        d = face_recognition.face_distance([image1_encoding], image2_encoding)
+        print("distance: ", d[0])
     except:
         return False
     return result[0]
