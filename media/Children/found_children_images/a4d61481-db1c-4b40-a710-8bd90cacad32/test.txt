@@ -1,4 +1,0 @@
-{
-   "image": "E:\\Workspace\\Backend\\FindMyChild-Backend\\media\\Children\\found_children_images\\a4d61481-db1c-4b40-a710-8bd90cacad32\\PXL_20230213_061256929.jpg",
-   "type": "found"
-}

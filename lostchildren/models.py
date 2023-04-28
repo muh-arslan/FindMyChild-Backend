@@ -1,4 +1,5 @@
 import json
+import numpy as np
 from django.db import models
 from django.utils import timezone
 from uuid import uuid4
@@ -45,66 +46,34 @@ class LostChild(BaseModel):
     province = models.CharField(
         max_length=18, choices=provinces_choices, null=True)
     home_address = models.CharField(max_length=100, null=True)
-    image1 = models.ImageField(
-        upload_to=get_child_image_upload_path_lost_child)
-    image2 = models.ImageField(
+    image = models.ImageField(
         upload_to=get_child_image_upload_path_lost_child, blank=True)
-    image3 = models.ImageField(
-        upload_to=get_child_image_upload_path_lost_child, blank=True)
-    image_encoding1 = models.JSONField(null=True, blank=True)
-    image_encoding2 = models.JSONField(null=True, blank=True)
-    image_encoding3 = models.JSONField(null=True, blank=True)
+    image_encoding = models.JSONField(null=True, blank=True)
     status = models.CharField(
         max_length=20, choices=BaseModel.STATUS_CHOICES, default='lost')
     reporter = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='lostReport', to_field='id')
 
     def generate_face_encodings(self):
-        image_paths = [self.image1.path]
-        if self.image2:
-            image_paths.append(self.image2.path)
-        if self.image3:
-            image_paths.append(self.image3.path)
-
-        encodings = [feature_extractor(path).tolist() for path in image_paths]
-
-        if encodings[0] is not None:
-            self.image_encoding1 = json.dumps(encodings[0])
-        if encodings[1] is not None:
-            self.image_encoding2 = json.dumps(encodings[1])
-        if encodings[2] is not None:
-            self.image_encoding3 = json.dumps(encodings[2])
+        image_path = self.image.path
+        encoding = feature_extractor(image_path)
+        if encoding is not None:
+            self.image_encoding = json.dumps(np.asarray(encoding).tolist())
 
 
 class FoundChild(BaseModel):
     date_of_found = models.DateField(default=timezone.now)
     location_where_found = models.CharField(max_length=100)
-    image1 = models.ImageField(
-        upload_to=get_child_image_upload_path_found_child)
-    image2 = models.ImageField(
+    image = models.ImageField(
         upload_to=get_child_image_upload_path_found_child, blank=True)
-    image3 = models.ImageField(
-        upload_to=get_child_image_upload_path_found_child, blank=True)
-    image_encoding1 = models.JSONField(null=True, blank=True)
-    image_encoding2 = models.JSONField(null=True, blank=True)
-    image_encoding3 = models.JSONField(null=True, blank=True)
+    image_encoding = models.JSONField(null=True, blank=True)
     status = models.CharField(
         max_length=20, choices=BaseModel.STATUS_CHOICES, default='found')
     reporter = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='foundReport', to_field='id')
 
     def generate_face_encodings(self):
-        image_paths = [self.image1.path]
-        if self.image2:
-            image_paths.append(self.image2.path)
-        if self.image3:
-            image_paths.append(self.image3.path)
-
-        encodings = [feature_extractor(path).tolist() for path in image_paths]
-
-        if encodings[0] is not None:
-            self.image_encoding1 = json.dumps(encodings[0])
-        if encodings[1] is not None:
-            self.image_encoding2 = json.dumps(encodings[1])
-        if encodings[2] is not None:
-            self.image_encoding3 = json.dumps(encodings[2])
+        image_path = self.image.path
+        encoding = feature_extractor(image_path)
+        if encoding is not None:
+            self.image_encoding = json.dumps(np.asarray(encoding).tolist())

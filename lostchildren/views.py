@@ -1,9 +1,12 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import LostChild, FoundChild
+import json
+import numpy as np
+from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from .models import LostChild, FoundChild
 from .serializers import LostChildSerializer, FoundChildSerializer
 from .face_recognizer import feature_extractor, match_results
 
@@ -30,21 +33,30 @@ class MatchedReports(APIView):
         image_encoding = feature_extractor(image)
 
         # get all lost or found reports depending on the type of the uploaded report
+        flag = True
         if request.data.get('type') == 'lost':
             queryset = FoundChild.objects.all()
         else:
+            flag = False
             queryset = LostChild.objects.all()
 
         # iterate through all reports and check for matching faces
         matched_reports = []
         for report in queryset:
-            report_encoding = report.image_encoding1
-            if report_encoding and match_results(image_encoding, report_encoding):
+            if report.image_encoding is not None:
+                report_encoding = np.array(json.loads(report.image_encoding))
+            else:
+                report_encoding = None
+            print(type(report_encoding), type(image_encoding))
+            if report_encoding is not None and np.all(match_results(image_encoding, report_encoding)):
                 matched_reports.append(report)
 
         # serialize the matched reports and return as JSON
-        serializer = LostChildSerializer(matched_reports, many=True)
-        print(serializer.data)
+        if flag:
+            serializer = FoundChildSerializer(matched_reports, many=True)
+        else:
+            serializer = LostChildSerializer(matched_reports, many=True)
+
         return Response(serializer.data)
 
 

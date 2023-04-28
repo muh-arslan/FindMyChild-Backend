@@ -48,10 +48,5 @@ def match_results(image1_encoding, image2_encoding):
         result = face_recognition.compare_faces(
             [image1_encoding], image2_encoding)
     except:
-        try:
-            image2_encoding = image2_encoding.reshape(1, -1)
-            result = face_recognition.compare_faces(
-                [image1_encoding], image2_encoding)
-        except:
-            return False
+        return False
     return result[0]
