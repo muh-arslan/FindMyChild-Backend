@@ -3,6 +3,7 @@ import numpy as np
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import LostChild, FoundChild
@@ -11,11 +12,19 @@ from .face_recognizer import feature_extractor, match_results
 
 
 class LostChildList(viewsets.ModelViewSet):
+
+    # authentication_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
+
     queryset = LostChild.objects.all()
     serializer_class = LostChildSerializer
 
 
 class FoundChildList(viewsets.ModelViewSet):
+
+    # authentication_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
+
     queryset = FoundChild.objects.all()
     serializer_class = FoundChildSerializer
 
