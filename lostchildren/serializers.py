@@ -5,7 +5,7 @@ from .models import LostChild, FoundChild
 class BaseChildSerializer(serializers.ModelSerializer):
     class Meta:
         abstract = True
-        fields = '__all__'
+        exclude = ['image_encoding']
 
     def create(self, validated_data):
         # Create the child object
