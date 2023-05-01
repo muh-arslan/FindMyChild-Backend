@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from collections import OrderedDict
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
@@ -60,6 +61,7 @@ class MatchedReports(APIView):
 
         # iterate through all reports and check for matching faces
         matched_reports = []
+        distances = []
         for report in queryset:
             if report.image_encoding is not None:
                 report_encoding = np.array(json.loads(report.image_encoding))
@@ -68,8 +70,11 @@ class MatchedReports(APIView):
 
             if child.gender == report.gender:
                 print(report.child_name)
-                if report_encoding is not None and np.all(match_results(image_encoding, report_encoding)):
+                is_matched, distance = match_results(
+                    image_encoding, report_encoding)
+                if report_encoding is not None and np.all(is_matched):
                     matched_reports.append(report)
+                    distances.append(distance)
 
         # serialize the matched reports and return as JSON
         if flag:
@@ -77,7 +82,14 @@ class MatchedReports(APIView):
         else:
             serializer = LostChildSerializer(matched_reports, many=True)
 
-        return Response(serializer.data)
+        output_data = []
+        for i, data in enumerate(serializer.data):
+            output_data.append({
+                'Child': OrderedDict(data.items()),
+                'distance': {'distance': distances[i]}
+            })
+
+        return Response(output_data)
 
 
 class ReceivedChildList(APIView):
