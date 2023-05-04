@@ -42,14 +42,19 @@ class RegisterUserView(CreateAPIView):
 
     def post(self, request):
         user_serializer = self.serializer_class(data=request.data, context={'request': request})
-        print(user_serializer)
-        if request.data:
+        if user_serializer.validate_email(request.data["email"]):
             #email = user_serializer.validated_data['email']
             email = request.data['email']
-            # Generate a random 6-digit code and store it in the user's session
+            first_name = request.data['first_name']
+            last_name = request.data['last_name']
+            phone_no = request.data['phone_no']
+            # Generate a random 5-digit code and store it in the user's session
             code = random.randint(10000, 99999)
             request.session['registration_code'] = code
             request.session['registration_email'] = email
+            request.session['registration_first_name'] = first_name
+            request.session['registration_last_name'] = last_name
+            request.session['registration_phone_no'] = phone_no
             # Send the code to the user's email address
             # send_mail(
             #     'Registration Code',
@@ -58,25 +63,29 @@ class RegisterUserView(CreateAPIView):
             #     [email],
             #     fail_silently=False,
             # )
-            return Response({"message": "A 6-digit code has been sent to your email address", "code": code})
+            return Response({"message": "A 5-digit code has been sent to your email address", "code": code})
         else:
             return Response({"message": "Invalid email address"})
 
     def put(self, request):
+        data = {}
         # Check if the user has a registration code in their session
         code = request.session.get('registration_code')
-        email = request.session.get('registration_email')
-        if not code or not email:
+        if not code:
             return Response({"message": "No registration in progress"})
         
+        data = request.data.copy()
+        data['email'] = request.session.get('registration_email')
+        data['first_name'] = request.session.get('registration_first_name')
+        data['last_name'] = request.session.get('registration_last_name')
+        #data['phone_no'] = request.session.get('registration_phone_no') 
         # Verify that the code provided by the user matches the code in the session
         code_received = request.data.get('code')
         if not code_received or str(code_received) != str(code):
             return Response({"message": "Invalid code"})
-        data1 = request.data
-        del data1['code']
+        
         # Create the user account
-        user_serializer = self.serializer_class(data=data1, context={'request': request})
+        user_serializer = self.serializer_class(data=data, context={'request': request})
         print(user_serializer.is_valid())
         if user_serializer.is_valid():
             user = user_serializer.save()
@@ -96,9 +105,8 @@ class LoginView(APIView):
             user = User.objects.get(email=data["email"])
             token = Token.objects.get_or_create(user=user)
             print(token[0].key)
-            print(request.user)
             response = dict()
-            response["message"] = "User logged in succesfully"
+            response["user_id"] = user.id
             response["status"] = "success"
             response["token"] = token[0].key
             return Response(response)

@@ -4,6 +4,7 @@ from .models import(
     User,
 )
 from django.db import models
+from django.core import validators
 
 class UserSerializer(serializers.ModelSerializer):
     
@@ -28,6 +29,19 @@ class UserSerializer(serializers.ModelSerializer):
             return user
         else:
             raise serializers.ValidationError({'Password': 'Passwords did not match'})
+    
+    def validate_email(self, value):
+        
+        try:
+            validators.validate_email(value)
+        except validators.ValidationError:
+            raise serializers.ValidationError("Invalid email")
+        
+        # Check if the email is already registered
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('Email already registered.')
+        
+        return value
         
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
