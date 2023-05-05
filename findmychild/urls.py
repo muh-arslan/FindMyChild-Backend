@@ -19,9 +19,8 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('login_app.urls'), name='login_app'),
-    path('', include('FriendApp.urls'), name='friend_app'),
-    path('', include('chatApp.urls'), name='chat_app'),
+    path("chat/", include("chat_app.urls")),
+    path('auth/', include('login_app.urls'), name='login_app'),
     path('', include('lostchildren.urls'), name='lost_children'),
     path('api/password_reset/',
          include('django_rest_passwordreset.urls', namespace='password_reset')),

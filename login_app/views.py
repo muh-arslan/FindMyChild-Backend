@@ -1,29 +1,67 @@
-from django.shortcuts import render
-from django.http import HttpResponseRedirect,HttpResponse
 from rest_framework.views import APIView
-from django.views.generic import ListView, DetailView, View
-from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveAPIView, ListCreateAPIView
-from .models import User
+from rest_framework.generics import CreateAPIView,RetrieveAPIView
+from .models import User, Jwt
 from django.dispatch import receiver
 from rest_framework.reverse import reverse
+from .authentication import Authentication
+from findmychild.custom_methods import IsAuthenticatedCustom
 from .serializers import ( 
                           UserSerializer, 
                           LoginSerializer,
                           ChangePasswordSerializer,
-                          RequestChangePasswordSerializer
+                          RequestChangePasswordSerializer,
+                          RefreshSerializer
                         )
 from rest_framework.response import Response
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
+from rest_framework.viewsets import ModelViewSet
+from django.conf import settings
 from django.contrib.auth import authenticate,login,logout
 from django.core.mail import EmailMessage
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 import random
+import string
+import jwt
+import re
+from django.db.models import Q, Count, OuterRef
+from datetime import datetime, timedelta
 # Create your views here.
-    
+
+def get_random(length):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+
+def get_access_token(payload):
+    return jwt.encode(
+        {"exp": datetime.now() + timedelta(minutes=5), **payload},
+        settings.SECRET_KEY,
+        algorithm="HS256"
+    )
+
+
+def get_refresh_token():
+    return jwt.encode(
+        {"exp": datetime.now() + timedelta(days=365), "data": get_random(10)},
+        settings.SECRET_KEY,
+        algorithm="HS256"
+    )
+
+
+def decodeJWT(bearer):
+    if not bearer:
+        return None
+
+    token = bearer[7:]
+    decoded = jwt.decode(token, key=settings.SECRET_KEY, algorithms=["HS256"])
+    if decoded:
+        try:
+            return User.objects.get(id=decoded["user_id"])
+        except Exception:
+            return None
+
+
 class RegisterUserView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -55,43 +93,46 @@ class RegisterUserView(CreateAPIView):
             request.session['registration_first_name'] = first_name
             request.session['registration_last_name'] = last_name
             request.session['registration_phone_no'] = phone_no
-            # Send the code to the user's email address
-            # send_mail(
-            #     'Registration Code',
-            #     f'Your registration code is: {code}',
-            #     'noreply@example.com',
-            #     [email],
-            #     fail_silently=False,
-            # )
             return Response({"message": "A 5-digit code has been sent to your email address", "code": code})
         else:
             return Response({"message": "Invalid email address"})
+    
+    def patch(self, request):
+        code = request.session.get('registration_code')
+        if not code:
+            request.session['code_status'] = False
+            return Response({"message": "No registration in progress"})
+        
+         # Verify that the code provided by the user matches the code in the session
+        code_received = request.data.pop('code')
+        if not code_received or str(code_received) != str(code):
+            request.session['code_status'] = False
+            return Response({"message": "Invalid code"})
+        request.session['code_status'] = True
+        return Response({"message": "Code Verified Successfully"})
 
     def put(self, request):
         data = {}
         # Check if the user has a registration code in their session
-        code = request.session.get('registration_code')
+        code = request.session.get('code_status')
         if not code:
             return Response({"message": "No registration in progress"})
-        
+ 
         data = request.data.copy()
         data['email'] = request.session.get('registration_email')
         data['first_name'] = request.session.get('registration_first_name')
         data['last_name'] = request.session.get('registration_last_name')
-        #data['phone_no'] = request.session.get('registration_phone_no') 
-        # Verify that the code provided by the user matches the code in the session
-        code_received = request.data.get('code')
-        if not code_received or str(code_received) != str(code):
-            return Response({"message": "Invalid code"})
-        
+        data['phone_no'] = request.session.get('registration_phone_no')
+        print(data)
         # Create the user account
         user_serializer = self.serializer_class(data=data, context={'request': request})
-        print(user_serializer.is_valid())
         if user_serializer.is_valid():
-            user = user_serializer.save()
+            user_serializer.save()
+            print(user_serializer.data)
             request.session.flush()
             return Response({"message": "User registered successfully"})
         else:
+            print(user_serializer.errors)
             return Response({"message": "Invalid password"})
             
     
@@ -103,20 +144,28 @@ class LoginView(APIView):
         data = request.data
         try:
             user = User.objects.get(email=data["email"])
-            token = Token.objects.get_or_create(user=user)
-            print(token[0].key)
-            response = dict()
-            response["user_id"] = user.id
-            response["status"] = "success"
-            response["token"] = token[0].key
-            return Response(response)
+            #token = Token.objects.get_or_create(user=user)
+            if user.check_password(data["password"]):
+                Jwt.objects.filter(user_id=user.id).delete()
+                access = get_access_token({"user_id": str(user.id)})
+                refresh = get_refresh_token()
+                response = dict()
+                response["message"] = "User logged in succesfully"
+                response["data"] = UserSerializer(user).data
+                response["status"] = "success"
+                response["token"] = access
+                response["refresh"] = refresh
+
+                Jwt.objects.create(
+                    user_id=user.id, access=access, refresh=refresh
+                )
+                return Response(response)
+            return Exception("Password did not Matched")
         except Exception as e:
-            print(e)
+            return Exception("Error Signing In")
         
 class LogoutView(APIView):
-    
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticatedCustom, )
     
     def get(self, request):
         token = Token.objects.get(user=request.user)
@@ -127,8 +176,7 @@ class LogoutView(APIView):
 class ChangePasswordView(APIView):
     
     serializer_class = ChangePasswordSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticatedCustom, )
     
     def post(self, request):
         user = request.user
@@ -148,8 +196,7 @@ class ChangePasswordView(APIView):
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticatedCustom, )
     def get(self, request):
         try:
             # print (reset_password_token.user.email)
@@ -159,7 +206,32 @@ class ListLoggedInUser(RetrieveAPIView):
             return Response(response)
         except Exception as e:
             return Response(e)
-        
+
+
+class RefreshView(APIView):
+    serializer_class = RefreshSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            active_jwt = Jwt.objects.get(
+                refresh=serializer.validated_data["refresh"])
+        except Jwt.DoesNotExist:
+            return Response({"error": "refresh token not found"}, status="400")
+        if not Authentication.verify_token(serializer.validated_data["refresh"]):
+            return Response({"error": "Token is invalid or has expired"})
+
+        access = get_access_token({"user_id": active_jwt.user.id})
+        refresh = get_refresh_token()
+
+        active_jwt.access = access.decode()
+        active_jwt.refresh = refresh.decode()
+        active_jwt.save()
+
+        return Response({"access": access, "refresh": refresh})
+
 
 # this signal is fired when we post request at "api/password_rest" it returns a token
 @receiver(reset_password_token_created)

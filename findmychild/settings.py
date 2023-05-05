@@ -41,6 +41,10 @@ ALLOWED_HOSTS.extend(
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
+    'channels_postgres',
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -57,8 +61,8 @@ INSTALLED_APPS = [
 
     # custom apps
     'login_app',
-    'FriendApp',
-    'chatApp',
+    'chat_app',
+    'notification_app',
     'lostchildren',
     'corsheaders',
 ]
@@ -95,7 +99,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "findmychild.wsgi.application"
+#WSGI_APPLICATION = "findmychild.wsgi.application"
+ASGI_APPLICATION = "findmychild.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 
 # Database

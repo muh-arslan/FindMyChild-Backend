@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email','password', 'confirmPassword', 'profile_photo')
+        fields = "__all__"
         extra_kwargs = {"password": {"write_only": True}}
         
     # Overwriting the create method for password validation check
@@ -31,7 +31,6 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'Password': 'Passwords did not match'})
     
     def validate_email(self, value):
-        
         try:
             validators.validate_email(value)
         except validators.ValidationError:
@@ -56,3 +55,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(max_length=200)
     new_password = serializers.CharField(max_length=200)
         
+
+class FavoriteSerializer(serializers.Serializer):
+    favorite_id = serializers.IntegerField()
+
+
+class RefreshSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
