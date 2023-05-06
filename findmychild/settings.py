@@ -29,7 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 # DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
-#ALLOWED_HOSTS = ['127.0.0.1','localhost', '44.202.44.149']
+# ALLOWED_HOSTS = ['127.0.0.1','localhost', '44.202.44.149']
 ALLOWED_HOSTS.extend(
     filter(
         None,
@@ -43,7 +43,6 @@ ALLOWED_HOSTS.extend(
 INSTALLED_APPS = [
     "daphne",
     "channels",
-    'channels_postgres',
 
     "django.contrib.admin",
     "django.contrib.auth",
@@ -99,7 +98,7 @@ TEMPLATES = [
     },
 ]
 
-#WSGI_APPLICATION = "findmychild.wsgi.application"
+# WSGI_APPLICATION = "findmychild.wsgi.application"
 ASGI_APPLICATION = "findmychild.asgi.application"
 
 CHANNEL_LAYERS = {
@@ -197,7 +196,7 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-#Waitress Config
+# Waitress Config
 try:
     import waitress
 except ImportError:
