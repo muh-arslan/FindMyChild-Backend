@@ -6,6 +6,7 @@ class BaseChildSerializer(serializers.ModelSerializer):
     class Meta:
         abstract = True
         exclude = ['image_encoding']
+        # fields = '__all__'
 
     def create(self, validated_data):
         # Create the child object
