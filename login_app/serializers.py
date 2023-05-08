@@ -1,9 +1,8 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_serializer, OpenApiParameter, OpenApiExample
 from .models import(
-    User,
+    User, OrgDetails, Location
 )
-from django.db import models
 from django.core import validators
 
 class UserSerializer(serializers.ModelSerializer):
@@ -45,7 +44,21 @@ class UserSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(max_length=200)
+
+class OrgDetailsSerializer(serializers.Serializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = OrgDetails
+        fields = "__all__"
     
+class LocationSerializer(serializers.Serializer):
+    user = serializers.SerializerMethodField()
+    class Meta:
+        model = Location
+        fields = "__all__"
+
+    def get_user(self,obj):
+        return obj.id
 
 class RequestChangePasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()

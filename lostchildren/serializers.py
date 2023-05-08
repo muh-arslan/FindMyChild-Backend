@@ -27,3 +27,14 @@ class LostChildSerializer(BaseChildSerializer):
 class FoundChildSerializer(BaseChildSerializer):
     class Meta(BaseChildSerializer.Meta):
         model = FoundChild
+
+
+class ReceivedChildrenSerializer(BaseChildSerializer):
+    reporter = serializers.SerializerMethodField()
+    
+    class Meta(BaseChildSerializer.Meta):
+        model = FoundChild
+
+    def get_reporter(self, obj):
+        return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
+    

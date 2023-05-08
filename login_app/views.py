@@ -81,19 +81,22 @@ class RegisterUserView(CreateAPIView):
     def post(self, request):
         user_serializer = self.serializer_class(data=request.data, context={'request': request})
         if user_serializer.validate_email(request.data["email"]):
+            print(request.data)
             #email = user_serializer.validated_data['email']
             email = request.data['email']
             first_name = request.data['first_name']
-            last_name = request.data['last_name']
+            if(request.data['last_name']):
+                last_name = request.data['last_name']
             phone_no = request.data['phone_no']
             # Generate a random 5-digit code and store it in the user's session
-            code = random.randint(10000, 99999)
+            code = random.randint(1000, 9999)
             request.session['registration_code'] = code
             request.session['registration_email'] = email
             request.session['registration_first_name'] = first_name
-            request.session['registration_last_name'] = last_name
+            if(last_name):
+                request.session['registration_last_name'] = last_name
             request.session['registration_phone_no'] = phone_no
-            return Response({"message": "A 5-digit code has been sent to your email address", "code": code})
+            return Response({"message": "success", "code": code})
         else:
             return Response({"message": "Invalid email address"})
     
@@ -102,14 +105,14 @@ class RegisterUserView(CreateAPIView):
         if not code:
             request.session['code_status'] = False
             return Response({"message": "No registration in progress"})
-        
-         # Verify that the code provided by the user matches the code in the session
+            
+        # Verify that the code provided by the user matches the code in the session
         code_received = request.data.pop('code')
         if not code_received or str(code_received) != str(code):
             request.session['code_status'] = False
             return Response({"message": "Invalid code"})
         request.session['code_status'] = True
-        return Response({"message": "Code Verified Successfully"})
+        return Response({"message": "success"})
 
     def put(self, request):
         data = {}

@@ -8,7 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import LostChild, FoundChild
-from .serializers import LostChildSerializer, FoundChildSerializer
+from .serializers import LostChildSerializer, FoundChildSerializer, ReceivedChildrenSerializer
 from .face_recognizer import feature_extractor, match_results
 
 
@@ -95,19 +95,19 @@ class MatchedReports(APIView):
 class ReceivedChildList(APIView):
     def get(self, request):
         # Get all LostChild reports with status="received"
-        lost_reports = LostChild.objects.filter(status='received')
-        lost_serializer = LostChildSerializer(lost_reports, many=True)
+        # lost_reports = LostChild.objects.filter(status='received')
+        # lost_serializer = LostChildSerializer(lost_reports, many=True)
 
         # Get all FoundChild reports with status="received"
         found_reports = FoundChild.objects.filter(status='received')
-        found_serializer = FoundChildSerializer(found_reports, many=True)
+        found_serializer = ReceivedChildrenSerializer(found_reports, many=True)
 
         # Combine the results and return the response
-        data = [
-            *lost_serializer.data,
-            *found_serializer.data
-        ]
-        return Response(data, status=status.HTTP_200_OK)
+        # data = [
+        #     *lost_serializer.data,
+        #     *found_serializer.data
+        # ]
+        return Response(found_serializer.data, status=status.HTTP_200_OK)
 
 
 """class ReportListView(APIView):

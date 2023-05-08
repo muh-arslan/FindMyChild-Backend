@@ -69,3 +69,4 @@ whitenoise==5.3.0
 wrapt==1.15.0
 waitress==2.1.2
 channels==4.0.0
+daphne==4.0.0

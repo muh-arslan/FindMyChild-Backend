@@ -54,6 +54,7 @@ class User(AbstractUser, BaseModel):
     online_status = models.BooleanField(default=False, null=True, blank=True)
     is_online = models.DateTimeField(default=timezone.now, null=True, blank=True)
     user_type = models.CharField(max_length=10, choices=[('appUser', 'AppUser'), ('orgUser', 'OrgUser')], default="appUser")
+    #address =  models.TextField(null=True, blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
@@ -73,6 +74,31 @@ class User(AbstractUser, BaseModel):
 #     class Meta:
 #         ordering = ("created_at",)
 
+class OrgDetails(models.Model):
+    user = models.OneToOneField(
+        User, related_name="org_details", on_delete=models.CASCADE)
+    about = models.TextField(blank=True, null=True)
+    services = models.CharField(max_length=10, choices=[('appUser', 'AppUser'), ('orgUser', 'OrgUser')], blank= True, null= True)
+    slogan = models.TextField(blank=True, null=True)
+    website = models.URLField(max_length=200, blank=True, null=True)        
+    created_at = models.DateTimeField(auto_now_add=True)    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.user.email
+
+class Location(models.Model):    
+    user = models.OneToOneField(
+        User, related_name="location", on_delete=models.CASCADE)
+    city = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=20)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.first_name
 
 class Jwt(models.Model):
     user = models.OneToOneField(
