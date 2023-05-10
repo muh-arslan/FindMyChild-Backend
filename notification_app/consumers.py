@@ -29,12 +29,14 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         self.room_name = None
 
     async def connect(self):
-        self.user = self.scope["user"]
-        #print(self.user)
-        if not self.user.is_authenticated:
-            print("user not authenticated")
-            return 
-        
+        try:
+            self.user = self.scope["user"]
+            #print(self.user)
+            if not self.user.is_authenticated:
+                print("user not authenticated")
+                return 
+        except Exception:
+            print(Exception)
         # self.room_id = f"{self.scope['url_route']['kwargs']['room_id']}"
         # try:
         #     self.chat_room = await sync_to_async(ChatRoom.objects.get)(id=self.room_id)
@@ -63,7 +65,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             "type": "welcome_message",
             "message": "Connected with room: " + self.user_channel_id
-        })        
+        })       
 
     async def disconnect(self, code):
         print("Disconnected!")
@@ -109,6 +111,10 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     def update_online_status(self, value):
         self.user.online_status = value
         self.user.save(update_fields=['online_status'])
+
+    async def match_found(self, event):
+        print(event)
+        await self.send_json(event)
 
     # @database_sync_to_async
     # def get_serialized_message(self):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LostChild, FoundChild
+from .models import LostChild, FoundChild, MatchingChild, MatchingReports
 
 
 class BaseChildSerializer(serializers.ModelSerializer):
@@ -38,3 +38,19 @@ class ReceivedChildrenSerializer(BaseChildSerializer):
     def get_reporter(self, obj):
         return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
     
+
+class MatchingChildSerializer(serializers.ModelSerializer):
+    recieved_child = FoundChildSerializer()
+
+    class Meta:
+        model = MatchingChild
+        fields = '__all__'
+
+
+class MatchingReportsSerializer(serializers.ModelSerializer):
+    lostChild = LostChildSerializer()
+    reports = MatchingChildSerializer(many=True)
+
+    class Meta:
+        model = MatchingReports
+        fields = '__all__'

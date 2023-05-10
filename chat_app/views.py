@@ -8,6 +8,8 @@ from .models import ChatRoom, Message
 from .serializers import ChatRoomSerializer, ChatRoomsByUserSerializer
 from findmychild.custom_methods import IsAuthenticatedCustom
 from django.shortcuts import get_object_or_404
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 class ChatRoomCreateView(generics.CreateAPIView):
     queryset = ChatRoom.objects.all()
@@ -18,7 +20,10 @@ class ChatRoomCreateView(generics.CreateAPIView):
         data={}
         user = request.user
         other_user_id = request.data['otherUserId']
-        other_user = User.objects.get(id = other_user_id)
+        try:
+            other_user = User.objects.get(id = other_user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not Found'}, status=404)
         if user.user_type == 'appUser':
             appUser = user
             orgUser = other_user
@@ -54,16 +59,19 @@ class ChatRoomGetView(generics.RetrieveAPIView):
 class ChatRoomByUserView(APIView):
     queryset = ChatRoom.objects.all()
     serializer_class = ChatRoomsByUserSerializer
-    permission_classes = (IsAuthenticatedCustom, )
+    permission_classes = (IsAuthenticatedCustom, )    
+    
+
 
     def post(self, request):
 
-        user_id = request.data.get('user_id', None)
-        #print(user_id)
-        if user_id is None:
-            return Response({'error': 'user_id not provided'}, status=400)
+        # user_id = request.data.get('user_id', None)
+        # #print(user_id)
+        # if user_id is None:
+        #     return Response({'error': 'user_id not provided'}, status=400)
         
-        user = get_object_or_404(User, id=user_id)
+        # user = get_object_or_404(User, id=user_id)
+        user = request.user
         if user.user_type == "appUser":
             chat_rooms = ChatRoom.objects.filter(appUser=user)
         else:

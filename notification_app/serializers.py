@@ -1,13 +1,16 @@
 from rest_framework import serializers
-from .models import Notification
+from .models import MatchNotification
 from login_app.serializers import UserSerializer
+from lostchildren.serializers import MatchingChildSerializer, LostChildSerializer
 
-class NotificationSerializer(serializers.ModelSerializer):
+class MatchNotificationSerializer(serializers.ModelSerializer):
 
     user = UserSerializer(read_only=True)
+    matching_child = MatchingChildSerializer(read_only=True)
+    lost_child = LostChildSerializer(read_only=True)
     
     class Meta:
-        model = Notification
+        model = MatchNotification
         fields = "__all__"
 
 # class ChatRoomsByUserSerializer(serializers.ModelSerializer):

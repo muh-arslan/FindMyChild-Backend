@@ -81,3 +81,20 @@ class FoundChild(BaseModel):
             encoding = feature_extractor(image_path)
             if encoding is not None:
                 self.image_encoding = json.dumps(np.asarray(encoding).tolist())
+
+class MatchingChild(models.Model):
+    recieved_child = models.ForeignKey(FoundChild, on_delete=models.CASCADE, related_name="match")
+    distance = models.FloatField()
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+class MatchingReports(models.Model):
+    lostChild = models.OneToOneField(LostChild, on_delete=models.CASCADE, related_name="matchingReports")
+    reports = models.ManyToManyField(MatchingChild, related_name="matches")
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
