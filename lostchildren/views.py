@@ -2,6 +2,7 @@ import json
 import numpy as np
 from collections import OrderedDict
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
 from rest_framework.authentication import TokenAuthentication
@@ -254,6 +255,15 @@ class ReceivedChildList(APIView):
         # ]
         return Response(found_serializer.data, status=status.HTTP_200_OK)
 
+
+def image_view(request, child_id):
+    child = get_object_or_404(FoundChild, id=child_id)
+    
+    if child.image:
+        with open(child.image.path, 'rb') as f:
+            return HttpResponse(f.read(), content_type='image/jpeg')
+    
+    return HttpResponse('Image not found.')
 
 """class ReportListView(APIView):
     permission_classes = [IsAuthenticated]
