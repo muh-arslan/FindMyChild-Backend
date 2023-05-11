@@ -18,6 +18,21 @@ class IsAuthenticatedCustom(BasePermission):
                 is_online=timezone.now())
             return True
         return False
+    
+class IsAuthenticatedAdmin(BasePermission):
+
+    def has_permission(self, request, view):
+        from login_app.views import decodeJWT
+        user = decodeJWT(request.META['HTTP_AUTHORIZATION'])
+        if not user:
+            return False
+        request.user = user
+        if request.user and request.user.is_authenticated:
+            if request.user.is_superuser:
+                User.objects.filter(id=request.user.id).update(
+                    is_online=timezone.now())
+                return True
+        return False
 
 
 class IsAuthenticatedOrReadCustom(BasePermission):

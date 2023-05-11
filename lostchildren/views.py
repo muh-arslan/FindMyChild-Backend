@@ -302,53 +302,26 @@ class ReportDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)"""
 
 
-class LostReportsList(generics.ListCreateAPIView):
-    serializer_class = LostChildSerializer
-    permission_classes = [IsAuthenticatedCustom]
+class ReportsByUser(generics.ListAPIView):
+    permission_classes = (IsAuthenticatedCustom,)
+    serializer_class = {
+        'lost_reports': LostChildSerializer,
+        'found_reports': FoundChildSerializer
+    }
 
     def get_queryset(self):
         user = self.request.user
-        return LostChild.objects.filter(reporter=user)
+        queryset = {
+            "lost_reports": LostChild.objects.filter(reporter=user),
+            "found_reports": FoundChild.objects.filter(reporter=user),
+        }
+        return queryset
 
-    def perform_create(self, serializer):
-        serializer.save(reporter=self.request.user)
-
-
-class LostReportsDetail(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = LostChildSerializer
-    permission_classes = [IsAuthenticatedCustom]
-
-    def get_queryset(self):
-        user = self.request.user
-        return LostChild.objects.filter(reporter=user)
-
-    def get_object(self):
+    def list(self, request):
         queryset = self.get_queryset()
-        obj = get_object_or_404(queryset, id=self.kwargs["pk"])
-        return obj
-
-
-class FoundReportsList(generics.ListCreateAPIView):
-    serializer_class = FoundChildSerializer
-    permission_classes = [IsAuthenticatedCustom]
-
-    def get_queryset(self):
-        user = self.request.user
-        return FoundChild.objects.filter(reporter=user)
-
-    def perform_create(self, serializer):
-        serializer.save(reporter=self.request.user)
-
-
-class FoundReportsDetail(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = FoundChildSerializer
-    permission_classes = [IsAuthenticatedCustom]
-
-    def get_queryset(self):
-        user = self.request.user
-        return FoundChild.objects.filter(reporter=user)
-
-    def get_object(self):
-        queryset = self.get_queryset()
-        obj = get_object_or_404(queryset, id=self.kwargs["pk"])
-        return obj
+        serialized_data = {}
+        for key in queryset:
+            serializer = self.serializer_class[key](queryset[key], many=True)
+            serialized_data[key] = serializer.data
+        return Response(serialized_data)
+    

@@ -69,9 +69,5 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(max_length=200)
         
 
-class FavoriteSerializer(serializers.Serializer):
-    favorite_id = serializers.IntegerField()
-
-
 class RefreshSerializer(serializers.Serializer):
     refresh = serializers.CharField()
