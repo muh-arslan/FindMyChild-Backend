@@ -75,30 +75,21 @@ class User(AbstractUser, BaseModel):
 #         ordering = ("created_at",)
 
 class OrgDetails(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.OneToOneField(
         User, related_name="org_details", on_delete=models.CASCADE)
     about = models.TextField(blank=True, null=True)
-    services = models.CharField(max_length=10, choices=[('appUser', 'AppUser'), ('orgUser', 'OrgUser')], blank= True, null= True)
     slogan = models.TextField(blank=True, null=True)
-    website = models.URLField(max_length=200, blank=True, null=True)        
-    created_at = models.DateTimeField(auto_now_add=True)    
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.user.email
-
-class Location(models.Model):    
-    user = models.OneToOneField(
-        User, related_name="location", on_delete=models.CASCADE)
+    website = models.URLField(max_length=200, blank=True, null=True)
     city = models.CharField(max_length=100)
     zip_code = models.CharField(max_length=20)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def __str__(self):
-        return self.user.first_name
+        return self.user.email
 
 class Jwt(models.Model):
     user = models.OneToOneField(
@@ -107,52 +98,4 @@ class Jwt(models.Model):
     refresh = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-# class CustomUserManager(BaseUserManager):
-#     """
-#     Custom user model manager where email is the unique identifiers
-#     for authentication instead of usernames.
-#     """
-#     def create_user(self, email, password, **extra_fields):
-#         """
-#         Create and save a User with the given email and password.
-#         """
-#         if not email:
-#             raise ValueError(_('The Email must be set'))
-#         email = self.normalize_email(email)
-#         user = self.model(email=email, **extra_fields)
-#         user.set_password(password)
-#         user.save(using=self._db)
-#         return user
-
-#     def create_superuser(self, email, password, **extra_fields):
-#         """
-#         Create and save a SuperUser with the given email and password.
-#         """
-#         extra_fields.setdefault('is_staff', True)
-#         extra_fields.setdefault('is_superuser', True)
-#         extra_fields.setdefault('is_active', True)
-
-#         if extra_fields.get('is_staff') is not True:
-#             raise ValueError(_('Superuser must have is_staff=True.'))
-#         if extra_fields.get('is_superuser') is not True:
-#             raise ValueError(_('Superuser must have is_superuser=True.'))
-#         return self.create_user(email, password, **extra_fields)
-
-
-# class User(AbstractUser, BaseModel):
-#     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-#     username = None
-#     email = models.EmailField(_('email address'), unique=True)
-#     first_name = models.CharField(max_length=256, null=True, blank=True)
-#     last_name = models.CharField(max_length=256, null=True, blank=True)
-#     profile_photo = models.ImageField(blank=True, upload_to='pictures')
-#     user_type = models.CharField(max_length=10, choices=[('appUser', 'AppUser'), ('orgUser', 'OrgUser')])
-#     USERNAME_FIELD = 'email'
-#     REQUIRED_FIELDS = []
-
-#     objects = CustomUserManager()
-
-#     def __str__(self):
-#         return self.email
 

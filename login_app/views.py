@@ -1,16 +1,18 @@
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView,RetrieveAPIView
-from .models import User, Jwt
+from rest_framework.generics import CreateAPIView,RetrieveAPIView, ListAPIView
+from .models import User, Jwt, OrgDetails
 from django.dispatch import receiver
 from rest_framework.reverse import reverse
 from .authentication import Authentication
 from findmychild.custom_methods import IsAuthenticatedCustom
+from django.forms.models import model_to_dict
 from .serializers import ( 
                           UserSerializer, 
                           LoginSerializer,
                           ChangePasswordSerializer,
                           RequestChangePasswordSerializer,
-                          RefreshSerializer
+                          RefreshSerializer,
+                          OrgDetailsSerializer
                         )
 from rest_framework.response import Response
 from django_rest_passwordreset.signals import reset_password_token_created
@@ -154,7 +156,7 @@ class LoginView(APIView):
                 refresh = get_refresh_token()
                 response = dict()
                 response["message"] = "User logged in succesfully"
-                response["data"] = UserSerializer(user).data
+                response["user"] = UserSerializer(user).data
                 response["status"] = "success"
                 response["token"] = access
                 response["refresh"] = refresh
@@ -162,6 +164,7 @@ class LoginView(APIView):
                 Jwt.objects.create(
                     user_id=user.id, access=access, refresh=refresh
                 )
+                print(response)
                 return Response(response)
             return Exception("Password did not Matched")
         except Exception as e:
@@ -209,6 +212,41 @@ class ListLoggedInUser(RetrieveAPIView):
             return Response(response)
         except Exception as e:
             return Response(e)
+        
+class ListLoggedInOrgUser(RetrieveAPIView):
+    serializer_class = OrgDetailsSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+    def get(self, request):
+        try:
+            # print (reset_password_token.user.email)
+            org_user = OrgDetails.objects.get(user=request.user)
+            print( model_to_dict(org_user))
+            if org_user:
+                response = self.serializer_class(org_user).data
+                print(response)
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+        
+class ListAllOrgUser(ListAPIView):
+    serializer_class = OrgDetailsSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+    
+    def get_queryset(self):
+        users = User.objects.filter(user_type="orgUser")
+        queryset = OrgDetails.objects.filter(user__in=users)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            print(queryset)
+            if queryset:
+                response = self.serializer_class(queryset, many=True).data
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+
 
 
 class RefreshView(APIView):
