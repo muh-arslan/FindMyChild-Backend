@@ -19,25 +19,20 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 class LostChildList(viewsets.ModelViewSet):
-
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = (IsAuthenticatedCustom, )
 
     queryset = LostChild.objects.all()
     serializer_class = LostChildSerializer
 
 
 class FoundChildList(viewsets.ModelViewSet):
-
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+    # permission_classes = (IsAuthenticatedCustom, )
 
     queryset = FoundChild.objects.all()
     serializer_class = FoundChildSerializer
 
 
 # class LostChildCreate(generics.CreateAPIView):
-#     serializer_class = LostChildSerializer
 #     permission_classes = (IsAuthenticatedCustom, )
 
 #     def post(self, request, format=None):
@@ -46,53 +41,7 @@ class FoundChildList(viewsets.ModelViewSet):
 #         serializer = self.serializer_class(data=reportData)
 #         serializer.is_valid(raise_exception=True)
 #         child = serializer.save()
-#         print("serializedData")
-#         print(child)
 
-#         queryset = FoundChild.objects.filter(status='received')
-
-#         image_encoding = np.array(json.loads(child.image_encoding))
-
-#         # iterate through all reports and check for matching faces
-#         try:
-#             matchingReports_obj = child.matchingReports
-#         except Exception:
-#             matchingReports_obj = MatchingReports.objects.create(lostChild=child)
-#         for report in queryset:
-#             if report.image_encoding is not None:
-#                 report_encoding = np.array(json.loads(report.image_encoding))
-#             else:
-#                 report_encoding = None
-
-#             if child.gender == report.gender:
-#                 print(report.child_name)
-#                 is_matched, distance = match_results(
-#                     image_encoding, report_encoding)
-#                 if report_encoding is not None and np.all(is_matched):
-                    
-#                     match_obj = {
-#                         "recieved_child": model_to_dict(report),
-#                         "distance": distance
-#                     }
-#                     serialized_report = MatchingChildSerializer(data = match_obj)
-#                     if serialized_report.is_valid(raise_exception= True):
-#                         matching_child_obj = serialized_report.save(recieved_child=report)
-#                         notification = MatchNotification.objects.create(user=report.reporter,
-#                             lost_child=child,
-#                             matching_child=matching_child_obj)
-#                         serialized_notification = MatchNotificationSerializer(notification).data
-#                         async_to_sync(self.channel_layer.group_send)(
-#                             f"{report.reporter_id}",
-#                             {
-#                                 "type": "match_found",
-#                                 "message": serialized_notification["id"],
-#                             },
-#                         )
-#                         matchingReports_obj.reports.add(matching_child_obj)
-
-#         output_data = MatchingReportsSerializer(matchingReports_obj).data
-
-#         return Response(output_data)
     
 class UpdateChildStatus(generics.CreateAPIView):
     serializer_class = FoundChildSerializer
@@ -110,37 +59,38 @@ class UpdateChildStatus(generics.CreateAPIView):
         report.reporter = orgUser
         report.status = 'received'
         child = self.serializer_class(report)
-
-        queryset = FoundChild.objects.filter(status='received')
-
+        try:
+            queryset = LostChild.objects.all()
+        except LostChild.DoesNotExist:
+                return Response({'error': 'No Lost Reports Found to Match with'}, status=404)
+        # get image encoding of the child
         image_encoding = np.array(json.loads(child.image_encoding))
 
         # iterate through all reports and check for matching faces
-        try:
-            matchingReports_obj = child.matchingReports
-        except Exception:
-            matchingReports_obj = MatchingReports.objects.create(lostChild=child)
+        matched_reports = []
+        distances = []
         for report in queryset:
             if report.image_encoding is not None:
                 report_encoding = np.array(json.loads(report.image_encoding))
             else:
                 report_encoding = None
-
+            print(report.child_name)
             if child.gender == report.gender:
-                print(report.child_name)
                 is_matched, distance = match_results(
                     image_encoding, report_encoding)
                 if report_encoding is not None and np.all(is_matched):
-                    
+                    matched_reports.append(report)
+                    distances.append(distance)
                     match_obj = {
                         "recieved_child": model_to_dict(child),
                         "distance": distance
                     }
                     serialized_report = MatchingChildSerializer(data = match_obj)
                     if serialized_report.is_valid(raise_exception= True):
-                        matching_child_obj = serialized_report.save(recieved_child=report)
+                        matching_child_obj = serialized_report.save(recieved_child=child)
                         report.matchingReports.reports.add(matching_child_obj)
-                        notification = MatchNotification.objects.create(user=report.reporter,
+                        
+                        notification = MatchNotification.objects.create(user_id=report.reporter.id,
                             lost_child=report,
                             matching_child=matching_child_obj)
                         serialized_notification = MatchNotificationSerializer(notification).data
@@ -153,12 +103,19 @@ class UpdateChildStatus(generics.CreateAPIView):
                             },
                         )
                         
+        serializer = LostChildSerializer(matched_reports, many=True)
 
-        output_data = MatchingReportsSerializer(matchingReports_obj).data
+        output_data = []
+        for i, data in enumerate(serializer.data):
+            output_data.append({
+                'Child': OrderedDict(data.items()),
+                'distance': {'distance': distances[i]}
+            })
 
         return Response(output_data)
 
-class MatchedReports(APIView):
+
+class LostMatchedReports(APIView):
     channel_layer = get_channel_layer()
 
     def post(self, request, format=None):
@@ -167,33 +124,22 @@ class MatchedReports(APIView):
         if not id:
             return Response({'error': 'Object id not found'}, status=400)
 
-        # check if object exists
-
-        if request.data.get('type') == 'lost':
-            flag = True
+        try:
+            child = LostChild.objects.get(id=id)
+            # queryset = FoundChild.objects.all()
+            queryset = FoundChild.objects.filter(status='received')
             try:
-                child = LostChild.objects.get(id=id)
-                # queryset = FoundChild.objects.all()
-                queryset = FoundChild.objects.filter(status='received')
-            except FoundChild.DoesNotExist:
-                return Response({'error': 'No Received Reports Found to Match with'}, status=404)
+                matchingReports_obj = child.matchingReports
+            except Exception:
+                matchingReports_obj = MatchingReports.objects.create(lostChild=child)
 
-        if request.data.get('type') == 'found':
-            flag = False
-            try:
-                child = FoundChild.objects.get(id=id)
-                queryset = LostChild.objects.all()
-            except LostChild.DoesNotExist:
-                return Response({'error': 'No Lost Reports Found to Match with'}, status=404)
-
+        except FoundChild.DoesNotExist:
+            return Response({'error': 'No Received Reports Found to Match with'}, status=404)
         # get image encoding of the child
         image_encoding = np.array(json.loads(child.image_encoding))
 
         # iterate through all reports and check for matching faces
-        try:
-            matchingReports_obj = child.matchingReports
-        except Exception:
-            matchingReports_obj = MatchingReports.objects.create(lostChild=child)
+        
         for report in queryset:
             if report.image_encoding is not None:
                 report_encoding = np.array(json.loads(report.image_encoding))
@@ -204,30 +150,9 @@ class MatchedReports(APIView):
                 is_matched, distance = match_results(
                     image_encoding, report_encoding)
                 if report_encoding is not None and np.all(is_matched):
-                    if not flag:
-                        match_obj = {
-                            "recieved_child": model_to_dict(child),
-                            "distance": distance
-                        }
-                        serialized_report = MatchingChildSerializer(data = match_obj)
-                        if serialized_report.is_valid(raise_exception= True):
-                            matching_child_obj = serialized_report.save(recieved_child=child)
-                            report.matchingReports.reports.add(matching_child_obj)
-                            
-                            notification = MatchNotification.objects.create(user=report.reporter,
-                                lost_child=report,
-                                matching_child=matching_child_obj)
-                            serialized_notification = MatchNotificationSerializer(notification).data
-                            print(serialized_notification)
-                            async_to_sync(self.channel_layer.group_send)(
-                                f"{report.reporter_id}",
-                                {
-                                    "type": "match_found",
-                                    "message": serialized_notification["id"],
-                                },
-                            )
-
-                    if flag:
+                    try:
+                        matchingReports_obj.reports.filter(recieved_child_id = report.id)
+                    except:
                         match_obj = {
                             "recieved_child": model_to_dict(report),
                             "distance": distance
@@ -237,28 +162,21 @@ class MatchedReports(APIView):
                         if serialized_report.is_valid():
                             matching_child_obj = serialized_report.save(recieved_child=report)
                             matchingReports_obj.reports.add(matching_child_obj)
-
+        
         # print(model_to_dict(matchingReports_obj))
         output_data = MatchingReportsSerializer(matchingReports_obj).data
-
-        return Response(output_data)
+        return Response(output_data)                
 
 
 class ReceivedChildList(APIView):
+    permission_classes = (IsAuthenticatedCustom, )
+    
     def get(self, request):
-        # Get all LostChild reports with status="received"
-        # lost_reports = LostChild.objects.filter(status='received')
-        # lost_serializer = LostChildSerializer(lost_reports, many=True)
 
         # Get all FoundChild reports with status="received"
         found_reports = FoundChild.objects.filter(status='received')
         found_serializer = ReceivedChildrenSerializer(found_reports, many=True)
 
-        # Combine the results and return the response
-        # data = [
-        #     *lost_serializer.data,
-        #     *found_serializer.data
-        # ]
         return Response(found_serializer.data, status=status.HTTP_200_OK)
 
 

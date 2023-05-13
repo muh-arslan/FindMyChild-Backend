@@ -5,9 +5,16 @@ from lostchildren.models import MatchingChild, LostChild
 from uuid import uuid4
 
 
-class MatchNotification(BaseModel):
+class Notification(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(User, related_name="notification", on_delete=models.CASCADE)
+    is_seen = models.BooleanField(default=False)
+    is_opened = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+class MatchNotification(Notification):
     type = models.CharField(max_length= 100, default="match_found", blank=True)
     description = models.TextField(blank=True, null=True)
     lost_child = models.ForeignKey(LostChild, on_delete=models.CASCADE, related_name="notification")
