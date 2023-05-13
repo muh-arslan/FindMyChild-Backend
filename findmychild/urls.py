@@ -22,6 +22,7 @@ urlpatterns = [
     path("chat/", include("chat_app.urls")),
     path('auth/', include('login_app.urls'), name='login_app'),
     path('', include('lostchildren.urls'), name='lost_children'),
+    path('notify/', include('notification_app.urls'), name='notificaion_app'),
     path('api/password_reset/',
          include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -1,14 +1,14 @@
-# from rest_framework import generics, status
-# from channels.layers import get_channel_layer
-# from rest_framework.response import Response
-# from rest_framework.decorators import api_view, permission_classes
-# from channels.db import database_sync_to_async
-# from .consumers import NotificationConsumer
-# from .models import Notification
-# from login_app.models import User
-# from .serializers import NotificationSerializer
-# from findmychild.custom_methods import IsAuthenticatedCustom
-# from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
+from channels.layers import get_channel_layer
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from channels.db import database_sync_to_async
+from .consumers import NotificationConsumer
+from .models import MatchNotification
+from login_app.models import User
+from .serializers import MatchNotificationSerializer
+from findmychild.custom_methods import IsAuthenticatedCustom
+from django.shortcuts import get_object_or_404
 
 # class NotificationCreateView(generics.CreateAPIView):
 #     queryset = Notification.objects.all()
@@ -34,5 +34,17 @@
 #             print(serializer.errors)
 #             return Response(serializer.data, status=status.HTTP_201_CREATED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ListUserNotificationsView(generics.ListAPIView):
+    serializer_class = MatchNotificationSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        matchNotifications = MatchNotification.objects.filter(user_id = user.id)
+        
+        serializedNotifications = MatchNotificationSerializer(matchNotifications, many=True).data
+            
+        return Response(serializedNotifications)
 
 
