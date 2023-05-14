@@ -51,14 +51,14 @@ from django.shortcuts import get_object_or_404
 class ListUserNotificationsView(generics.ListAPIView):
     permission_classes = (IsAuthenticatedCustom,)
     serializer_class = {
-        'match_notificaions': MatchNotificationSerializer,
+        'match_notifications': MatchNotificationSerializer,
         'drop_chid_notifications': DropChildNotificationSerializer
     }
 
     def get_queryset(self):
         user = self.request.user
         queryset = {
-            "match_notificaions": MatchNotification.objects.filter(user_id=user.id),
+            "match_notifications": MatchNotification.objects.filter(user_id=user.id),
             "drop_chid_notifications": DropChildNotification.objects.filter(user_id=user.id),
         }
         return queryset

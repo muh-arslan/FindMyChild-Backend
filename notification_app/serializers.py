@@ -3,8 +3,8 @@ from .models import MatchNotification, DropChildNotification
 from lostchildren.serializers import MatchingChildSerializer
 
 class MatchNotificationSerializer(serializers.ModelSerializer):
-    # matching_child = MatchingChildSerializer()
-    matching_child = serializers.SerializerMethodField()    
+    matching_child = MatchingChildSerializer()
+    # matching_child = serializers.SerializerMethodField()    
     user = serializers.SerializerMethodField()
     lost_child = serializers.SerializerMethodField()
     
