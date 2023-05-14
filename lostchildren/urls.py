@@ -14,5 +14,9 @@ urlpatterns = [
     path('user-reports/', ReportsByUser.as_view(), name="user_reports"),
     path('received-children/', ReceivedChildList.as_view(),
          name='received_child_view'),
-    path('image/<uuid:child_id>/', image_view, name='image_view'),
+    path('image/found/<uuid:child_id>/', image_view,
+         {'child_model': 'found'}, name='found_child_image_view'),
+    path('image/lost/<uuid:child_id>/', image_view,
+         {'child_model': 'lost'}, name='lost_child_image_view'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
