@@ -156,9 +156,9 @@ class LostMatchedReports(APIView):
                     image_encoding, report_encoding)
                 if report_encoding is not None and np.all(is_matched):
                     try:
-                        matchingReports_obj.reports.filter(
+                        matchingReports_obj.reports.get(
                             recieved_child_id=report.id)
-                    except:
+                    except Exception:
                         match_obj = {
                             "recieved_child": model_to_dict(report),
                             "distance": distance
