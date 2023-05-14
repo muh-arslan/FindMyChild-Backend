@@ -48,7 +48,7 @@ class MatchingChildSerializer(serializers.ModelSerializer):
 
 
 class MatchingReportsSerializer(serializers.ModelSerializer):
-    lostChild = LostChildSerializer()
+    lost_child = LostChildSerializer()
     reports = MatchingChildSerializer(many=True)
 
     class Meta:

@@ -12,14 +12,14 @@ class MatchNotificationSerializer(serializers.ModelSerializer):
         model = MatchNotification
         fields = "__all__"
 
+    def get_matching_child(self, obj):
+        return {"id": str(obj.matching_child.id)}
+    
     def get_user(self, obj):
         return {"id": str(obj.user.id)}
     
     def get_lost_child(self, obj):
         return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name}
-    
-    def get_matching_child(str, obj):
-        return {"id": obj.matching_child.id}
 
 class DropChildNotificationSerializer(serializers.ModelSerializer):
 

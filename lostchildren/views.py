@@ -44,22 +44,23 @@ class FoundChildList(viewsets.ModelViewSet):
 #         child = serializer.save()
 
 
-class UpdateChildStatus(generics.CreateAPIView):
+class UpdateChildStatus(generics.UpdateAPIView):
     serializer_class = FoundChildSerializer
     channel_layer = get_channel_layer()
     permission_classes = (IsAuthenticatedCustom, )
 
-    def post(self, request, format=None):
+    def patch(self, request, format=None):
         # get id of the FoundChild or LostChild object
         report_id = request.data.get('report_id', None)
 
         if not report_id:
             return Response({'error': 'Object report_id not found'}, status=400)
-        report = FoundChild.objects.get(id=report_id)
+        found_report = FoundChild.objects.get(id=report_id)
         orgUser = User.objects.get(id=request.user.id)
-        report.reporter = orgUser
-        report.status = 'received'
-        child = self.serializer_class(report)
+        found_report.reporter = orgUser
+        found_report.status = 'received'
+        found_report.save()
+        child = found_report
         try:
             queryset = LostChild.objects.all()
         except LostChild.DoesNotExist:
@@ -94,7 +95,7 @@ class UpdateChildStatus(generics.CreateAPIView):
 
                         notification = MatchNotification.objects.create(user_id=report.reporter.id,
                                                                         lost_child=report,
-                                                                        matching_child=matching_child_obj)
+                                                                        matching_child_id=matching_child_obj.id)
                         serialized_notification = MatchNotificationSerializer(
                             notification).data
                         print(serialized_notification)
@@ -102,7 +103,7 @@ class UpdateChildStatus(generics.CreateAPIView):
                             f"{report.reporter_id}",
                             {
                                 "type": "match_found",
-                                "message": serialized_notification["id"],
+                                "message": serialized_notification,
                             },
                         )
 
@@ -135,7 +136,7 @@ class LostMatchedReports(APIView):
                 matchingReports_obj = child.matchingReports
             except Exception:
                 matchingReports_obj = MatchingReports.objects.create(
-                    lostChild=child)
+                    lost_child=child)
 
         except FoundChild.DoesNotExist:
             return Response({'error': 'No Received Reports Found to Match with'}, status=404)
