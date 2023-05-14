@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import LostChildList, FoundChildList, LostMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus,image_view
+from .views import LostChildList, FoundChildList, LostMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, image_view
 
 router = routers.DefaultRouter()
 router.register(r'lost-children', LostChildList)
@@ -11,7 +11,8 @@ router.register(r'found-children', FoundChildList)
 urlpatterns = [
     path('', include(router.urls)),
     path('matched-reports/', LostMatchedReports.as_view(), name='matched_reports'),
-    path('user-reports/', ReportsByUser.as_view(), name="user_reports"),
+    path('user-reports/', ReportsByUser.as_view(), name="user_reports"),    
+    path('create-lost-report/', LostChildCreate.as_view(), name="create_lost_child"),
     path('received-children/', ReceivedChildList.as_view(),
          name='received_child_view'),
      path('change-status/', UpdateChildStatus.as_view(),
