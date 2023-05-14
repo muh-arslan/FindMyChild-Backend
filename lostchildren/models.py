@@ -83,6 +83,7 @@ class FoundChild(BaseModel):
                 self.image_encoding = json.dumps(np.asarray(encoding).tolist())
 
 class MatchingChild(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     recieved_child = models.ForeignKey(FoundChild, on_delete=models.CASCADE, related_name="match")
     distance = models.FloatField()
     created_at = models.DateTimeField(
@@ -90,7 +91,8 @@ class MatchingChild(models.Model):
     )
 
 class MatchingReports(models.Model):
-    lostChild = models.OneToOneField(LostChild, on_delete=models.CASCADE, related_name="matchingReports")
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    lost_child = models.OneToOneField(LostChild, on_delete=models.CASCADE, related_name="matchingReports")
     reports = models.ManyToManyField(MatchingChild, related_name="matches")
     created_at = models.DateTimeField(
         auto_now_add=True

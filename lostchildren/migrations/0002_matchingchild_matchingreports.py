@@ -2,6 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
+import uuid
 
 
 class Migration(migrations.Migration):
@@ -16,17 +17,17 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigAutoField(
-                        auto_created=True,
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
                         primary_key=True,
                         serialize=False,
-                        verbose_name="ID",
                     ),
                 ),
                 ("distance", models.FloatField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
-                    "recievedChild",
+                    "recieved_child",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="match",
@@ -40,23 +41,23 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "id",
-                    models.BigAutoField(
-                        auto_created=True,
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
                         primary_key=True,
                         serialize=False,
-                        verbose_name="ID",
                     ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
-                    "Reports",
+                    "reports",
                     models.ManyToManyField(
                         related_name="matches", to="lostchildren.matchingchild"
                     ),
                 ),
                 (
-                    "lostChild",
+                    "lost_child",
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="matchingReports",

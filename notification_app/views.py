@@ -4,9 +4,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from channels.db import database_sync_to_async
 from .consumers import NotificationConsumer
-from .models import MatchNotification
+from .models import MatchNotification, DropChildNotification
 from login_app.models import User
-from .serializers import MatchNotificationSerializer
+from .serializers import MatchNotificationSerializer, DropChildNotificationSerializer
 from findmychild.custom_methods import IsAuthenticatedCustom
 from django.shortcuts import get_object_or_404
 
@@ -35,16 +35,40 @@ from django.shortcuts import get_object_or_404
 #             return Response(serializer.data, status=status.HTTP_201_CREATED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ListUserNotificationsView(generics.ListAPIView):
-    serializer_class = MatchNotificationSerializer
-    permission_classes = (IsAuthenticatedCustom, )
+# class ListUserNotificationsView(generics.ListAPIView):
+#     serializer_class = MatchNotificationSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
 
-    def list(self, request, *args, **kwargs):
-        user = request.user
-        matchNotifications = MatchNotification.objects.filter(user_id = user.id)
+#     def list(self, request, *args, **kwargs):
+#         user = request.user
+#         matchNotifications = MatchNotification.objects.filter(user_id = user.id)
         
-        serializedNotifications = MatchNotificationSerializer(matchNotifications, many=True).data
+#         serializedNotifications = MatchNotificationSerializer(matchNotifications, many=True).data
             
-        return Response(serializedNotifications)
+#         return Response(serializedNotifications)
+    
+
+class ListUserNotificationsView(generics.ListAPIView):
+    permission_classes = (IsAuthenticatedCustom,)
+    serializer_class = {
+        'match_notificaions': MatchNotificationSerializer,
+        'drop_chid_notifications': DropChildNotificationSerializer
+    }
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = {
+            "match_notificaions": MatchNotification.objects.filter(user_id=user.id),
+            "drop_chid_notifications": DropChildNotification.objects.filter(user_id=user.id),
+        }
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serialized_data = {}
+        for key in queryset:
+            serializer = self.serializer_class[key](queryset[key], many=True)
+            serialized_data[key] = serializer.data
+        return Response(serialized_data)
 
 
