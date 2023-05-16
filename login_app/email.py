@@ -7,4 +7,9 @@ def send_otp_via_email(email, otp):
     subject = "Email Verification"
     message = f'Your OTP For FindMyChild is {otp}'
     email_from = settings.EMAIL_HOST
-    send_mail(subject, message, email_from, [email])
+    try:
+        send_mail(subject, message, email_from, [email])
+        print('Email sent successfully')
+    except Exception as e:
+        print('Error sending email:', str(e))
+        return str(e)
