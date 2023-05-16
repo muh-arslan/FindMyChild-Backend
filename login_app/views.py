@@ -1,3 +1,4 @@
+from django.http import HttpResponseBadRequest
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, ListAPIView
 from .models import User, Jwt, OrgDetails
@@ -29,6 +30,7 @@ import jwt
 import re
 from django.db.models import Q, Count, OuterRef
 from datetime import datetime, timedelta
+from django.core.exceptions import ObjectDoesNotExist
 from .email import send_otp_via_email
 # Create your views here.
 
@@ -141,50 +143,43 @@ class ForgotPassword(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    code = None
-
     def post(self, request):
         data = request.data
         try:
-            email = data['email']
-            User.objects.get(email=email)
-
-            self.code = random.randint(1000, 9999)
+            email = data.get('email')
+            user = User.objects.get(email=email)
+            code = random.randint(1000, 9999)
             request.session['email'] = email
-            request.session['registration_code'] = self.code
-            send_otp_via_email(email, self.code)
-        except Exception:
-            return Exception("Email is not registered!")
+            request.session['registration_code'] = code
+            send_otp_via_email(email, code)
+            return Response({"message": "success"})
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest("Email is not registered!")
 
     def patch(self, request):
-        self.code = request.session.get('registration_code')
-        print("in patch", self.code)
-        if self.code is None:
+        code = request.session.get('registration_code')
+        if code is None:
             request.session['code_status'] = False
             return Response({"message": "No registration in progress"})
 
-        # Verify that the code provided by the user matches the code in the session
-        code_received = request.data.pop('code')
-        print("received code", code_received)
-        if not code_received or str(code_received) != str(self.code):
+        received_code = request.data.get('code')
+        if not received_code or str(received_code) != str(code):
             request.session['code_status'] = False
             return Response({"message": "Invalid code"})
+
         request.session['code_status'] = True
         return Response({"message": "success"})
 
     def put(self, request):
-        data = {}
-        # Check if the user has a registration code in their session
-        code = request.session.get('code_status')
-        if not code:
+        code_status = request.session.get('code_status')
+        if not code_status:
             return Response({"message": "No registration in progress"})
 
         email = request.session.get('email')
         user = User.objects.get(email=email)
-        print(data)
-        user.set_password(request.data["password"])
+        user.set_password(request.data.get("password"))
         user.save()
-        return Response({"message": "Password Changed successfully"})
+        return Response({"message": "Password changed successfully"})
 
 
 class LoginView(APIView):
