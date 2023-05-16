@@ -29,7 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 # DEBUG = bool(int(os.environ.get('DEBUG', 0)))
 
-#ALLOWED_HOSTS = ['127.0.0.1','localhost', '44.202.44.149']
+# ALLOWED_HOSTS = ['127.0.0.1','localhost', '44.202.44.149']
 ALLOWED_HOSTS.extend(
     filter(
         None,
@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
     "rest_framework.authtoken",
     'django_rest_passwordreset',
-
 
     # custom apps
     'login_app',
@@ -98,7 +97,7 @@ TEMPLATES = [
     },
 ]
 
-#WSGI_APPLICATION = "findmychild.wsgi.application"
+# WSGI_APPLICATION = "findmychild.wsgi.application"
 ASGI_APPLICATION = "findmychild.asgi.application"
 
 CHANNEL_LAYERS = {
@@ -182,12 +181,19 @@ MEDIA_URL = '/media/'
 
 AUTH_USER_MODEL = 'login_app.User'
 
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = config('EMAIL_PORT')
+# EMAIL_BACKEND = config('EMAIL_BACKEND')
+# EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+# EMAIL_HOST = config('EMAIL_HOST')
+# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+# EMAIL_PORT = config('EMAIL_PORT')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'findmychildverify@gmail.com'
+EMAIL_HOST_PASSWORD = 'kzshwsktmsevytce'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -204,7 +210,7 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-#Waitress Config
+# Waitress Config
 try:
     import waitress
 except ImportError:
