@@ -139,21 +139,24 @@ class UpdateChildStatus(generics.UpdateAPIView):
                     if serialized_report.is_valid(raise_exception=True):
                         matching_child_obj = serialized_report.save(
                             recieved_child=child)
-                        report.matchingReports.reports.add(matching_child_obj)
+                        try:
+                            report.matchingReports.reports.add(matching_child_obj)
 
-                        notification = MatchNotification.objects.create(user_id=report.reporter.id,
-                                                                        lost_child=report,
-                                                                        matching_child_id=matching_child_obj.id)
-                        serialized_notification = MatchNotificationSerializer(
-                            notification).data
-                        print(serialized_notification)
-                        async_to_sync(self.channel_layer.group_send)(
-                            f"{report.reporter_id}",
-                            {
-                                "type": "match_found",
-                                "message": serialized_notification,
-                            },
-                        )
+                            notification = MatchNotification.objects.create(user_id=report.reporter.id,
+                                                                            lost_child=report,
+                                                                            matching_child_id=matching_child_obj.id)
+                            serialized_notification = MatchNotificationSerializer(
+                                notification).data
+                            print(serialized_notification)
+                            async_to_sync(self.channel_layer.group_send)(
+                                f"{report.reporter_id}",
+                                {
+                                    "type": "match_found",
+                                    "message": serialized_notification,
+                                },
+                            )
+                        except Exception:
+                                print(Exception)
 
         serializer = LostChildSerializer(matched_reports, many=True)
 
@@ -223,6 +226,16 @@ class LostMatchedReports(APIView):
         output_data = MatchingReportsSerializer(matchingReports_obj).data
         return Response(output_data)
 
+class GetMatchedReports(APIView):
+    permission_classes = (IsAuthenticatedCustom, )
+    serializer_class = MatchingReportsSerializer
+
+    def get(self, request):
+        lost_child = LostChild.objects.get(id = request.data["id"])
+        matched_reports = MatchingReports.objects.get(lost_child = lost_child)
+        serialized_obj = self.serializer_class(matched_reports, many=True)
+
+        return Response(serialized_obj.data, status=status.HTTP_200_OK)
 
 class ReceivedChildList(APIView):
     permission_classes = (IsAuthenticatedCustom, )

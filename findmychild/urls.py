@@ -19,6 +19,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('custom-admin/', include("custom_admin.urls")),
     path("chat/", include("chat_app.urls")),
     path('auth/', include('login_app.urls'), name='login_app'),
     path('', include('lostchildren.urls'), name='lost_children'),

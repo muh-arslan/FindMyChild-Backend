@@ -2,36 +2,37 @@ from django.http import HttpResponseBadRequest
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, ListAPIView
 from .models import User, Jwt, OrgDetails
+from notification_app.models import OrgVerifyNotification
+from notification_app.serializers import OrgVerifyNotificationSerializer
 from django.dispatch import receiver
-from rest_framework.reverse import reverse
 from .authentication import Authentication
-from findmychild.custom_methods import IsAuthenticatedCustom
+from findmychild.custom_methods import IsAuthenticatedCustom, IsAuthenticatedAdmin
 from django.forms.models import model_to_dict
 from .serializers import (
     UserSerializer,
     LoginSerializer,
     ChangePasswordSerializer,
-    RequestChangePasswordSerializer,
     RefreshSerializer,
-    OrgDetailsSerializer
+    OrgDetailsSerializer,
+    SimpleOrgUserSerializer
 )
+from django.forms.models import model_to_dict
 from rest_framework.response import Response
 from django_rest_passwordreset.signals import reset_password_token_created
 from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
-from rest_framework.viewsets import ModelViewSet
 from django.conf import settings
-from django.contrib.auth import authenticate, login, logout
 from django.core.mail import EmailMessage
 from rest_framework.authtoken.models import Token
 import random
 import string
 import jwt
-import re
 from django.db.models import Q, Count, OuterRef
 from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from .email import send_otp_via_email
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 # Create your views here.
 
 
@@ -67,6 +68,20 @@ def decodeJWT(bearer):
         except Exception:
             return None
 
+def sendSignUpNotificaiton(userId):    
+    channel_layer = get_channel_layer()
+    admin = User.objects.get(is_superuser = True)
+    notification = OrgVerifyNotification.objects.create(type="verification_request",user_id=admin.id, description="Verification Request", org_user_id = userId)
+    serialized_notification = OrgVerifyNotificationSerializer(
+        notification).data
+    print(serialized_notification)
+    async_to_sync(channel_layer.group_send)(
+        "admin_group",
+        {
+            "type": "verification_request",
+            "message": serialized_notification,
+        },
+    )
 
 class RegisterUserView(CreateAPIView):
     queryset = User.objects.all()
@@ -130,8 +145,10 @@ class RegisterUserView(CreateAPIView):
         user_serializer = self.serializer_class(
             data=data, context={'request': request})
         if user_serializer.is_valid():
-            user_serializer.save()
-            print(user_serializer.data)
+            user = user_serializer.save()
+            if user.user_type == "orgUser":
+                OrgDetails.objects.create(user = user)
+                sendSignUpNotificaiton(user.id)
             request.session.flush()
             return Response({"message": "User registered successfully"})
         else:
@@ -238,7 +255,9 @@ class ChangePasswordView(APIView):
             else:
                 return Response({"message": "Previous Password incorrect"})
 
-
+"""
+    USER PROFILES
+"""
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -263,11 +282,55 @@ class ListLoggedInOrgUser(RetrieveAPIView):
     def get(self, request):
         try:
             # print (reset_password_token.user.email)
-            org_user = OrgDetails.objects.get(user=request.user)
-            print(model_to_dict(org_user))
+            try:
+                org_user = OrgDetails.objects.get(user=request.user)
+            except:
+                org_user = OrgDetails.objects.create(user=request.user)
             if org_user:
                 response = self.serializer_class(org_user).data
                 print(response)
+            return Response(response)
+        except Exception as e:
+            return print(e)
+
+"""
+    UPDATE USER
+"""
+
+class UpdateLoggedInUser(RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def patch(self, request):
+        try:
+            # print (reset_password_token.user.email)
+            logged_user = User.objects.get(email=request.user.email)
+            updated_user = request.data
+            if logged_user:
+                for key, value in updated_user.items():
+                    setattr(logged_user, key, value)
+                logged_user.save()
+                response = self.serializer_class(
+                    logged_user, context={"request": request}).data
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+        
+class UpdateLoggedInOrgUser(RetrieveAPIView):
+    serializer_class = OrgDetailsSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def patch(self, request):
+        try:
+            # print (reset_password_token.user.email)
+            org_user = OrgDetails.objects.get(user=request.user)
+            updated_user = request.data
+            for key, value in updated_user.items():
+                setattr(org_user, key, value)
+                setattr(org_user.user, key, value)
+                org_user.save()
+                response = self.serializer_class(
+                    org_user, context={"request": request}).data
             return Response(response)
         except Exception as e:
             return Response(e)
@@ -292,6 +355,65 @@ class ListAllOrgUser(ListAPIView):
         except Exception as e:
             return Response(e)
 
+class OrgUserDetails(APIView):
+    serializer_class = OrgDetailsSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def get(self, request, *args, **kwargs):
+        org_user_id = kwargs.get("id")
+        user = User.objects.get(id = org_user_id)
+        queryset = OrgDetails.objects.get(user=user)
+        try:
+            if queryset:
+                response = self.serializer_class(queryset).data
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+
+
+class UnverifiedOrgs(ListAPIView):
+
+    permission_classes = (IsAuthenticatedCustom, )
+    serializer_class = SimpleOrgUserSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(user_type="orgUser", is_staff=False)
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            response = self.serializer_class(queryset, many=True).data
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+        
+class VerifyOrgUser(APIView):
+    permission_classes = (IsAuthenticatedAdmin,)
+    serializer_class = UserSerializer        
+    channel_layer = get_channel_layer()
+
+    def post(self, request, *args, **kwargs):
+        try:
+            orgUserId = request.data["id"]
+            orgUser = User.objects.get(id=orgUserId)
+            print(orgUser)
+            orgUser.is_staff = True
+            orgUser.save()
+            serialized_user = self.serializer_class(orgUser).data
+            async_to_sync(self.channel_layer.group_send)(
+                f"{orgUser.id}",
+                {
+                    "type": "verification_success",
+                    "message": serialized_user,
+                },
+            )
+            return Response({"message": "Org is successfuly verified"})
+        except User.DoesNotExist:
+            return Response({"message": "User not found"})
+        except Exception as e:
+            return Response({"message": str(e)})
+
+    
 
 class RefreshView(APIView):
     serializer_class = RefreshSerializer

@@ -1,10 +1,29 @@
 from rest_framework import serializers
-from .models import MatchNotification, DropChildNotification
+from .models import MatchNotification, DropChildNotification, OrgVerifyNotification
 from lostchildren.serializers import MatchingChildSerializer
 
 class MatchNotificationSerializer(serializers.ModelSerializer):
-    matching_child = MatchingChildSerializer()
-    # matching_child = serializers.SerializerMethodField()    
+    # matching_child = MatchingChildSerializer()
+    matching_child = serializers.SerializerMethodField()    
+    user = serializers.SerializerMethodField()
+    lost_child = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MatchNotification
+        fields = "__all__"
+
+    def get_matching_child(self, obj):
+        return {"id": str(obj.matching_child.id)}
+    
+    def get_user(self, obj):
+        return {"id": str(obj.user.id)}
+    
+    def get_lost_child(self, obj):
+        return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name}
+
+class SimpeMatchNotificationSerializer(serializers.ModelSerializer):
+    #matching_child = MatchingChildSerializer()
+    matching_child = serializers.SerializerMethodField()    
     user = serializers.SerializerMethodField()
     lost_child = serializers.SerializerMethodField()
     
@@ -35,5 +54,20 @@ class DropChildNotificationSerializer(serializers.ModelSerializer):
     
     def get_found_child(self, obj):
         return {"id": str(obj.found_child.id)}
+    
+class OrgVerifyNotificationSerializer(serializers.ModelSerializer):
+
+    user = serializers.SerializerMethodField()
+    org_user = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OrgVerifyNotification
+        fields = "__all__"
+
+    def get_user(self, obj):
+        return {"id": str(obj.user.id)}
+    
+    def get_org_user(self, obj):
+        return {"id": str(obj.org_user.id), "first_name": obj.org_user.first_name, "last_name": obj.org_user.last_name}
 
 

@@ -54,10 +54,12 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         # print(self.appUser.id)
         # print(">>>>>>>>>>>>>>>>>>>orgUser")
         # print(self.orgUser.id)
-        self.user_channel_id = str(self.user.id)
-
-     
-        await self.channel_layer.group_add(self.user_channel_id, self.channel_name)
+        if self.user.is_superuser:
+            self.user_channel_id = "admin_group"
+            await self.channel_layer.group_add(self.user_channel_id, self.channel_name)
+        else:            
+            self.user_channel_id = str(self.user.id)
+            await self.channel_layer.group_add(self.user_channel_id, self.channel_name)
         await self.accept()
         await self.update_online_status(True)
         print("Connected with room:" + self.user_channel_id)
@@ -113,6 +115,14 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         self.user.save(update_fields=['online_status'])
 
     async def match_found(self, event):
+        print(event)
+        await self.send_json(event)
+
+    async def verification_request(self, event):
+        print(event)
+        await self.send_json(event)
+    
+    async def verification_success(self, event):
         print(event)
         await self.send_json(event)
 

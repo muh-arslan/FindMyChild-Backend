@@ -62,6 +62,9 @@ class LostChild(BaseModel):
             if encoding is not None:
                 self.image_encoding = json.dumps(np.asarray(encoding).tolist())
 
+    def __str__(self):
+        return self.child_name
+
 
 class FoundChild(BaseModel):
     date_of_found = models.DateField(null=True, blank=True)
@@ -82,6 +85,9 @@ class FoundChild(BaseModel):
             if encoding is not None:
                 self.image_encoding = json.dumps(np.asarray(encoding).tolist())
 
+    def __str__(self):
+        return self.child_name
+
 class MatchingChild(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     recieved_child = models.ForeignKey(FoundChild, on_delete=models.CASCADE, related_name="match")
@@ -89,6 +95,8 @@ class MatchingChild(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+    def __str__(self):
+        return self.recieved_child.child_name
 
 class MatchingReports(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -100,3 +108,6 @@ class MatchingReports(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
+
+    def __str__(self):
+        return self.lost_child.child_name

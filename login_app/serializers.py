@@ -63,3 +63,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class RefreshSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+class SimpleOrgUserSerializer(serializers.ModelSerializer):
+       
+    class Meta:
+        model = User
+        fields = ("id", "first_name", "last_name")

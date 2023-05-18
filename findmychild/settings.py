@@ -37,6 +37,10 @@ ALLOWED_HOSTS.extend(
     )
 )
 
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
+}
 
 # Application definition
 
@@ -62,6 +66,7 @@ INSTALLED_APPS = [
     'chat_app',
     'notification_app',
     'lostchildren',
+    'custom_admin',
     'corsheaders',
 ]
 
@@ -114,22 +119,22 @@ CHANNEL_LAYERS = {
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'fyp_db',
-        'USER': 'arslan',
-        'PASSWORD': 'finalyearproject',
-        'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
-        'PORT': '5432',
-    }
     # "default": {
     #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'test_db',
-    #     'USER': 'postgres',
-    #     'PASSWORD': '1234',
-    #     'HOST': '127.0.0.1',
+    #     'NAME': 'fyp_db',
+    #     'USER': 'arslan',
+    #     'PASSWORD': 'finalyearproject',
+    #     'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
     #     'PORT': '5432',
     # }
+    "default": {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'test_db',
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
 }
 
 

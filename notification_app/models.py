@@ -33,3 +33,13 @@ class DropChildNotification(Notification):
     
     def __str__(self):
         return self.type
+
+class OrgVerifyNotification(Notification):
+    type = models.CharField(max_length= 100, choices= [('verification_request', 'Verification Request'),('verification_success', 'Verification Success')])
+    user = models.ForeignKey(User, related_name="user_verify_nofication", on_delete=models.CASCADE)
+    description = models.TextField(blank=True, null=True)
+    org_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="org_user_verify_nofication")
+    
+    
+    def __str__(self):
+        return self.type
