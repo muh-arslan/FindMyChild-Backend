@@ -36,7 +36,7 @@ class FoundChildList(viewsets.ModelViewSet):
 class LostChildCreate(generics.CreateAPIView):
     # permission_classes = (IsAuthenticatedCustom, )
     serializer_class = LostChildSerializer
-    
+
     def post(self, request, format=None):
         reportData = request.data
         # reportData["reporter"] = request.user.id
@@ -89,7 +89,6 @@ class LostChildCreate(generics.CreateAPIView):
         # print(model_to_dict(matchingReports_obj))
         output_data = MatchingReportsSerializer(matchingReports_obj).data
         return Response(output_data)
-        
 
 
 class UpdateChildStatus(generics.UpdateAPIView):
@@ -140,11 +139,13 @@ class UpdateChildStatus(generics.UpdateAPIView):
                         matching_child_obj = serialized_report.save(
                             recieved_child=child)
                         try:
-                            report.matchingReports.reports.add(matching_child_obj)
+                            report.matchingReports.reports.add(
+                                matching_child_obj)
 
                             notification = MatchNotification.objects.create(user_id=report.reporter.id,
                                                                             lost_child=report,
-                                                                            matching_child_id=matching_child_obj.id)
+                                                                            matching_child_id=matching_child_obj.id, descript="Match Report")
+
                             serialized_notification = MatchNotificationSerializer(
                                 notification).data
                             print(serialized_notification)
@@ -156,7 +157,7 @@ class UpdateChildStatus(generics.UpdateAPIView):
                                 },
                             )
                         except Exception:
-                                print(Exception)
+                            print(Exception)
 
         serializer = LostChildSerializer(matched_reports, many=True)
 
@@ -226,16 +227,18 @@ class LostMatchedReports(APIView):
         output_data = MatchingReportsSerializer(matchingReports_obj).data
         return Response(output_data)
 
+
 class GetMatchedReports(APIView):
     permission_classes = (IsAuthenticatedCustom, )
     serializer_class = MatchingReportsSerializer
 
-    def get(self, request):
-        lost_child = LostChild.objects.get(id = request.data["id"])
-        matched_reports = MatchingReports.objects.get(lost_child = lost_child)
-        serialized_obj = self.serializer_class(matched_reports, many=True)
+    def post(self, request):
+        lost_child = LostChild.objects.get(id=request.data["id"])
+        matched_reports = MatchingReports.objects.get(lost_child=lost_child)
+        serialized_obj = self.serializer_class(matched_reports)
 
         return Response(serialized_obj.data, status=status.HTTP_200_OK)
+
 
 class ReceivedChildList(APIView):
     permission_classes = (IsAuthenticatedCustom, )

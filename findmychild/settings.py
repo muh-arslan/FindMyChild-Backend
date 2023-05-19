@@ -37,10 +37,10 @@ ALLOWED_HOSTS.extend(
     )
 )
 
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 10
+# }
 
 # Application definition
 
@@ -127,11 +127,19 @@ DATABASES = {
     #     'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
     #     'PORT': '5432',
     # }
+    # "default": {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'test_db',
+    #     'USER': 'postgres',
+    #     'PASSWORD': '1234',
+    #     'HOST': '127.0.0.1',
+    #     'PORT': '5432',
+    # }
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'test_db',
+        'NAME': 'fyp_local',
         'USER': 'postgres',
-        'PASSWORD': '1234',
+        'PASSWORD': '127586',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }

@@ -32,6 +32,8 @@ class BaseModel(models.Model):
     age = models.PositiveIntegerField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
@@ -88,19 +90,24 @@ class FoundChild(BaseModel):
     def __str__(self):
         return self.child_name
 
+
 class MatchingChild(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    recieved_child = models.ForeignKey(FoundChild, on_delete=models.CASCADE, related_name="match")
+    recieved_child = models.ForeignKey(
+        FoundChild, on_delete=models.CASCADE, related_name="match")
     distance = models.FloatField()
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+
     def __str__(self):
         return self.recieved_child.child_name
 
+
 class MatchingReports(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    lost_child = models.OneToOneField(LostChild, on_delete=models.CASCADE, related_name="matchingReports")
+    lost_child = models.OneToOneField(
+        LostChild, on_delete=models.CASCADE, related_name="matchingReports")
     reports = models.ManyToManyField(MatchingChild, related_name="matches")
     created_at = models.DateTimeField(
         auto_now_add=True

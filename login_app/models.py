@@ -5,17 +5,19 @@ from django.contrib.auth.models import AbstractUser
 from django.dispatch import receiver
 from django.urls import reverse
 from django_rest_passwordreset.signals import reset_password_token_created
-from django.core.mail import send_mail 
+from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 from django.utils import timezone
 from baseModel.base_model import BaseModel
 from uuid import uuid4
+
 
 class CustomUserManager(BaseUserManager):
     """
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
+
     def create_user(self, email, password, **extra_fields):
         """
         Create and save a User with the given email and password.
@@ -50,11 +52,13 @@ class User(AbstractUser, BaseModel):
     first_name = models.CharField(max_length=256, null=True, blank=True)
     last_name = models.CharField(max_length=256, null=True, blank=True)
     profile_photo = models.ImageField(blank=True, upload_to='pictures')
-    phone_no = models.CharField(max_length=20, null=True, blank= True)
+    phone_no = models.CharField(max_length=20, null=True, blank=True)
     online_status = models.BooleanField(default=False, null=True, blank=True)
-    is_online = models.DateTimeField(default=timezone.now, null=True, blank=True)
-    user_type = models.CharField(max_length=10, choices=[('appUser', 'AppUser'), ('orgUser', 'OrgUser')], default="appUser")
-    #address =  models.TextField(null=True, blank=True)
+    is_online = models.DateTimeField(
+        default=timezone.now, null=True, blank=True)
+    user_type = models.CharField(max_length=10, choices=[(
+        'appUser', 'AppUser'), ('orgUser', 'OrgUser')], default="appUser")
+    address = models.TextField(null=True, blank=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
@@ -62,7 +66,7 @@ class User(AbstractUser, BaseModel):
 
     def __str__(self):
         return self.email
-    
+
 # class Favorite(models.Model):
 #     user = models.OneToOneField(User, related_name="user_favorites", on_delete=models.CASCADE)
 #     favorite = models.ManyToManyField(User, related_name="user_favoured")
@@ -74,6 +78,7 @@ class User(AbstractUser, BaseModel):
 #     class Meta:
 #         ordering = ("created_at",)
 
+
 class OrgDetails(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.OneToOneField(
@@ -83,13 +88,16 @@ class OrgDetails(models.Model):
     website = models.URLField(max_length=200, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=20, blank=True, null=True)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)    
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return self.user.email
+
 
 class Jwt(models.Model):
     user = models.OneToOneField(
@@ -98,4 +106,3 @@ class Jwt(models.Model):
     refresh = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
