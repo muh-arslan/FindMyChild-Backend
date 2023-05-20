@@ -20,7 +20,7 @@ class MatchNotificationSerializer(serializers.ModelSerializer):
         return {"id": str(obj.user.id)}
 
     def get_lost_child(self, obj):
-        return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name}
+        return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name, "image": obj.lost_child.image}
 
 
 class SimpeMatchNotificationSerializer(serializers.ModelSerializer):
@@ -40,7 +40,7 @@ class SimpeMatchNotificationSerializer(serializers.ModelSerializer):
         return {"id": str(obj.user.id)}
 
     def get_lost_child(self, obj):
-        return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name}
+        return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name, "image": obj.lost_child.image}
 
 
 class DropChildNotificationSerializer(serializers.ModelSerializer):

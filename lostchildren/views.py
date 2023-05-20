@@ -19,14 +19,14 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 
-class LostChildList(viewsets.ModelViewSet):
+class LostChildren(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticatedCustom, )
 
     queryset = LostChild.objects.all()
     serializer_class = LostChildSerializer
 
 
-class FoundChildList(viewsets.ModelViewSet):
+class FoundChildren(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticatedCustom, )
 
     queryset = FoundChild.objects.all()
@@ -241,6 +241,17 @@ class GetMatchedReports(APIView):
 
 
 class ReceivedChildList(APIView):
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def get(self, request):
+
+        # Get all FoundChild reports with status="received"
+        found_reports = FoundChild.objects.filter(status='received')
+        found_serializer = ReceivedChildrenSerializer(found_reports, many=True)
+
+        return Response(found_serializer.data, status=status.HTTP_200_OK)
+    
+class FoundChildList(APIView):
     permission_classes = (IsAuthenticatedCustom, )
 
     def get(self, request):

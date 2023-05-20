@@ -68,10 +68,10 @@ def decodeJWT(bearer):
         except Exception:
             return None
 
-def sendSignUpNotificaiton(userId):    
+def sendSignUpNotificaiton(user):    
     channel_layer = get_channel_layer()
     admin = User.objects.get(is_superuser = True)
-    notification = OrgVerifyNotification.objects.create(type="verification_request",user_id=admin.id, description="Verification Request", org_user_id = userId)
+    notification = OrgVerifyNotification.objects.create(type="verification_request",user_id=admin.id, description="Verification Request", org_user = user)
     serialized_notification = OrgVerifyNotificationSerializer(
         notification).data
     print(serialized_notification)
@@ -148,7 +148,7 @@ class RegisterUserView(CreateAPIView):
             user = user_serializer.save()
             if user.user_type == "orgUser":
                 OrgDetails.objects.create(user = user)
-                sendSignUpNotificaiton(user.id)
+                sendSignUpNotificaiton(user)
             request.session.flush()
             return Response({"message": "User registered successfully"})
         else:

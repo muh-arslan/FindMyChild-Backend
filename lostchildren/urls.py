@@ -2,11 +2,11 @@ from django.urls import path, include
 from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import LostChildList, FoundChildList, LostMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, GetMatchedReports, image_view
+from .views import FoundChildList, LostMatchedReports, GetMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, LostChildren, FoundChildren, image_view
 
 router = routers.DefaultRouter()
-router.register(r'lost-children', LostChildList)
-router.register(r'found-children', FoundChildList)
+router.register(r'lost-children', LostChildren)
+router.register(r'found-children', FoundChildren)
 
 urlpatterns = [
     path('', include(router.urls)),
