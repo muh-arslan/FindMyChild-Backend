@@ -53,6 +53,11 @@ class User(AbstractUser, BaseModel):
     last_name = models.CharField(max_length=256, null=True, blank=True)
     profile_photo = models.ImageField(blank=True, upload_to='pictures')
     phone_no = models.CharField(max_length=20, null=True, blank=True)
+    provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
+        'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
+    province = models.CharField(
+        max_length=18, choices=provinces_choices, null=True, blank=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
     online_status = models.BooleanField(default=False, null=True, blank=True)
     is_online = models.DateTimeField(
         default=timezone.now, null=True, blank=True)

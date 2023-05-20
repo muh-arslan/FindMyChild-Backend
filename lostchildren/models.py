@@ -22,6 +22,8 @@ class BaseModel(models.Model):
         ('received', 'Received'),
         ('resolved', 'Resolved')
     ]
+    provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
+        'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     child_name = models.CharField(max_length=50, null=True, blank=True)
     father_name = models.CharField(max_length=50, null=True, blank=True)
@@ -31,6 +33,9 @@ class BaseModel(models.Model):
         max_length=1, choices=gender_choices, null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    province = models.CharField(
+        max_length=18, choices=provinces_choices, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -43,11 +48,6 @@ class LostChild(BaseModel):
     date_of_lost = models.DateField(null=True, blank=True)
     location_where_lost = models.CharField(
         max_length=100, null=True, blank=True)
-    city = models.CharField(max_length=50, null=True, blank=True)
-    provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
-        'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
-    province = models.CharField(
-        max_length=18, choices=provinces_choices, null=True, blank=True)
     home_address = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(
         upload_to=get_child_image_upload_path_lost_child, null=True, blank=True)
