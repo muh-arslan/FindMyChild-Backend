@@ -91,7 +91,6 @@ class OrgDetails(models.Model):
     about = models.TextField(blank=True, null=True)
     slogan = models.TextField(blank=True, null=True)
     website = models.URLField(max_length=200, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=20, blank=True, null=True)
     latitude = models.DecimalField(
         max_digits=9, decimal_places=6, blank=True, null=True)
