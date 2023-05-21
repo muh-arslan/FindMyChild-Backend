@@ -33,6 +33,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .email import send_otp_via_email
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.http import FileResponse
 # Create your views here.
 
 
@@ -68,10 +69,12 @@ def decodeJWT(bearer):
         except Exception:
             return None
 
-def sendSignUpNotificaiton(user):    
+
+def sendSignUpNotificaiton(user):
     channel_layer = get_channel_layer()
-    admin = User.objects.get(is_superuser = True)
-    notification = OrgVerifyNotification.objects.create(type="verification_request",user_id=admin.id, description="Verification Request", org_user = user)
+    admin = User.objects.get(is_superuser=True)
+    notification = OrgVerifyNotification.objects.create(
+        type="verification_request", user_id=admin.id, description="Verification Request", org_user=user)
     serialized_notification = OrgVerifyNotificationSerializer(
         notification).data
     print(serialized_notification)
@@ -82,6 +85,7 @@ def sendSignUpNotificaiton(user):
             "message": serialized_notification,
         },
     )
+
 
 class RegisterUserView(CreateAPIView):
     queryset = User.objects.all()
@@ -147,7 +151,7 @@ class RegisterUserView(CreateAPIView):
         if user_serializer.is_valid():
             user = user_serializer.save()
             if user.user_type == "orgUser":
-                OrgDetails.objects.create(user = user)
+                OrgDetails.objects.create(user=user)
                 sendSignUpNotificaiton(user)
             request.session.flush()
             return Response({"message": "User registered successfully"})
@@ -255,9 +259,12 @@ class ChangePasswordView(APIView):
             else:
                 return Response({"message": "Previous Password incorrect"})
 
+
 """
     USER PROFILES
 """
+
+
 class ListLoggedInUser(RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -293,9 +300,17 @@ class ListLoggedInOrgUser(RetrieveAPIView):
         except Exception as e:
             return print(e)
 
+
 """
     UPDATE USER
 """
+
+
+def user_profile_photo_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    file_path = user.profile_photo.path
+    return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
+
 
 class UpdateLoggedInUser(RetrieveAPIView):
     serializer_class = UserSerializer
@@ -315,7 +330,8 @@ class UpdateLoggedInUser(RetrieveAPIView):
             return Response(response)
         except Exception as e:
             return Response(e)
-        
+
+
 class UpdateLoggedInOrgUser(RetrieveAPIView):
     serializer_class = OrgDetailsSerializer
     permission_classes = (IsAuthenticatedCustom, )
@@ -355,6 +371,7 @@ class ListAllOrgUser(ListAPIView):
         except Exception as e:
             return Response(e)
 
+
 class ListAllUser(ListAPIView):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticatedCustom, )
@@ -373,13 +390,14 @@ class ListAllUser(ListAPIView):
         except Exception as e:
             return Response(e)
 
+
 class OrgUserDetails(APIView):
     serializer_class = OrgDetailsSerializer
     permission_classes = (IsAuthenticatedCustom, )
 
     def get(self, request, *args, **kwargs):
         org_user_id = kwargs.get("id")
-        user = User.objects.get(id = org_user_id)
+        user = User.objects.get(id=org_user_id)
         queryset = OrgDetails.objects.get(user=user)
         try:
             if queryset:
@@ -404,10 +422,11 @@ class UnverifiedOrgs(ListAPIView):
             return Response(response)
         except Exception as e:
             return Response(e)
-        
+
+
 class VerifyOrgUser(APIView):
     permission_classes = (IsAuthenticatedAdmin,)
-    serializer_class = UserSerializer        
+    serializer_class = UserSerializer
     channel_layer = get_channel_layer()
 
     def post(self, request, *args, **kwargs):
@@ -431,7 +450,6 @@ class VerifyOrgUser(APIView):
         except Exception as e:
             return Response({"message": str(e)})
 
-    
 
 class RefreshView(APIView):
     serializer_class = RefreshSerializer

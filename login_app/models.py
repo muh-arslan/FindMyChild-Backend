@@ -45,13 +45,18 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+def user_profile_photo_path(instance, filename):
+    return f'pictures/{instance.id}/{filename}'
+
+
 class User(AbstractUser, BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     username = None
     email = models.EmailField(_('email address'), unique=True)
     first_name = models.CharField(max_length=256, null=True, blank=True)
     last_name = models.CharField(max_length=256, null=True, blank=True)
-    profile_photo = models.ImageField(blank=True, upload_to='pictures')
+    profile_photo = models.ImageField(
+        blank=True, upload_to=user_profile_photo_path)
     phone_no = models.CharField(max_length=20, null=True, blank=True)
     provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
         'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
@@ -71,6 +76,7 @@ class User(AbstractUser, BaseModel):
 
     def __str__(self):
         return self.email
+
 
 # class Favorite(models.Model):
 #     user = models.OneToOneField(User, related_name="user_favorites", on_delete=models.CASCADE)
