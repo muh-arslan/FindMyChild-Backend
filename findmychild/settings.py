@@ -127,22 +127,22 @@ DATABASES = {
     #     'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
     #     'PORT': '5432',
     # }
-    # "default": {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'test_db',
-    #     'USER': 'postgres',
-    #     'PASSWORD': '1234',
-    #     'HOST': '127.0.0.1',
-    #     'PORT': '5432',
-    # }
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'fyp_local',
+        'NAME': 'test_db',
         'USER': 'postgres',
-        'PASSWORD': '127586',
+        'PASSWORD': '1234',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
+    # "default": {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'fyp_local',
+    #     'USER': 'postgres',
+    #     'PASSWORD': '127586',
+    #     'HOST': '127.0.0.1',
+    #     'PORT': '5432',
+    # }
 }
 
 
@@ -213,18 +213,18 @@ EMAIL_HOST_PASSWORD = 'kzshwsktmsevytce'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SAMESITE = 'None'
-# SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 
 # CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:3000',
-#     'http://192.168.0.110:8000'
-# ]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    "https://findmychild.netlify.app"
+]
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from django.conf import settings
-from .views import RegisterUserView, LoginView, LogoutView, ChangePasswordView, ListLoggedInUser, RefreshView, ListLoggedInOrgUser, ListAllOrgUser, ForgotPassword, UnverifiedOrgs, VerifyOrgUser, UpdateLoggedInUser, UpdateLoggedInOrgUser
+from .views import RegisterUserView, LoginView, LogoutView, ChangePasswordView, ListLoggedInUser, RefreshView, ListLoggedInOrgUser, ListAllOrgUser,ListAllUser, ForgotPassword, UnverifiedOrgs, VerifyOrgUser, UpdateLoggedInUser, UpdateLoggedInOrgUser
 from django.conf.urls.static import static
 
 urlpatterns = [
@@ -21,6 +21,9 @@ urlpatterns = [
           name='update_logged_in_org_user'),
 
      path('all-orgs', ListAllOrgUser.as_view(), name='all_org_user_data'),
+     path('all-app-users', ListAllUser.as_view(), name='all_app_user_data'),
+     
+
      path('unverified-orgs', UnverifiedOrgs.as_view(), name='unverified_orgs'),
      path('verify-org-user', VerifyOrgUser.as_view(), name='verify_org_user'),
     

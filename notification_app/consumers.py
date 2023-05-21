@@ -12,6 +12,8 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 # from .models import ChatRoom, Message
 from login_app.models import User
+from .models import DropChildNotification
+from .serializers import DropChildNotificationSerializer
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
@@ -78,37 +80,32 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content, **kwargs):
         channel_layer = get_channel_layer()
         print(channel_layer)
-    #     message_type = content["type"]
+        message_type = content["type"]
     #     if message_type == "greeting":
     #         await self.send_json({
     #             "type": "greeting_response",
     #             "message": "How are you?",
     #         })
-    #     if message_type == "chat_message":
-    #         message = await self.create_message(content)
-    #         print(message)
-    #         await self.channel_layer.group_send(
-    #             self.room_name, {
-    #                 "type": "chat_message_echo",
-    #                 "message": message,
-    #             },
-    #         )
-    #     return super().receive_json(content, **kwargs)
+        if message_type == "drop_child_request":
+            drop_notification = await self.create_drop_child_notification(content)
+            print(drop_notification)
+            await self.channel_layer.group_send(
+                content["user_id"], {
+                    "type": "drop_child_request",
+                    "message": drop_notification,
+                },
+            )
+        return super().receive_json(content, **kwargs)
     
-    # @database_sync_to_async
-    # def create_message(self, content):
-    #     data = {
-    #         "sender": self.user,
-    #         'reciever':self.get_receiver(),
-    #         'message':content["message"],
-    #         'chat_room':self.chat_room
-    #     }
-    #     serialized_message = MessageSerializer(data = data)
-    #     if serialized_message.is_valid():
-    #         serialized_message.save(sender = self.user,
-    #         reciever = self.get_receiver(),
-    #         chat_room = self.chat_room)
-    #         return serialized_message.data
+    @database_sync_to_async
+    def create_drop_child_notification(self, content):
+        try:
+            drop_notification = DropChildNotification.objects.create(type= content["type"], description=content["description"],user_id = content["user_id"], found_child_id = content["found_child_id"]  )
+            serialized_notification = DropChildNotificationSerializer(drop_notification).data
+            return serialized_notification
+        except Exception as e:
+            return Exception(e)
+        
     @database_sync_to_async
     def update_online_status(self, value):
         self.user.online_status = value
@@ -121,8 +118,17 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     async def verification_request(self, event):
         print(event)
         await self.send_json(event)
+
+    async def drop_child_request(self, event):
+        print(event)
+        await self.send_json(event)
+        
     
     async def verification_success(self, event):
+        print(event)
+        await self.send_json(event)
+
+    async def drop_child_success(self, event):
         print(event)
         await self.send_json(event)
 

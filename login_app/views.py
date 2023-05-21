@@ -355,6 +355,24 @@ class ListAllOrgUser(ListAPIView):
         except Exception as e:
             return Response(e)
 
+class ListAllUser(ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def get_queryset(self):
+        queryset = User.objects.filter(user_type="appUser")
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            print(queryset)
+            if queryset:
+                response = self.serializer_class(queryset, many=True).data
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+
 class OrgUserDetails(APIView):
     serializer_class = OrgDetailsSerializer
     permission_classes = (IsAuthenticatedCustom, )

@@ -13,8 +13,8 @@ from .serializers import LostChildSerializer, FoundChildSerializer, ReceivedChil
 from .face_recognizer import feature_extractor, match_results
 from django.forms.models import model_to_dict
 from login_app.models import User, OrgDetails
-from notification_app.models import MatchNotification
-from notification_app.serializers import MatchNotificationSerializer
+from notification_app.models import MatchNotification, DropChildNotification
+from notification_app.serializers import MatchNotificationSerializer, DropChildNotificationSerializer
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
@@ -104,6 +104,7 @@ class UpdateChildStatus(generics.UpdateAPIView):
             return Response({'error': 'Object report_id not found'}, status=400)
         found_report = FoundChild.objects.get(id=report_id)
         orgUser = User.objects.get(id=request.user.id)
+        founder = found_report.reporter
         found_report.reporter = orgUser
         found_report.status = 'received'
         found_report.save()
@@ -158,7 +159,18 @@ class UpdateChildStatus(generics.UpdateAPIView):
                             )
                         except Exception:
                             print(Exception)
-
+        try:
+            drop_notification = DropChildNotification.objects.create(type= "drop_child_success", description="Child is Received Successfully",user = founder, found_child = child  )
+            serialized_drop_notification = DropChildNotificationSerializer(drop_notification).data
+            async_to_sync(self.channel_layer.group_send)(
+                                f"{founder.id}",
+                                {
+                                    "type": "drop_child_success",
+                                    "message": serialized_drop_notification,
+                                },
+                            )
+        except Exception as e:
+            return Exception(e)
         serializer = LostChildSerializer(matched_reports, many=True)
 
         output_data = []

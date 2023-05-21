@@ -78,7 +78,7 @@ class TokenAuthMiddleware:
         # Look up user from query string (you should also do things like
         # checking if it is a valid user ID, or if scope["user"] is already
         # populated).
-        query_params = parse_qs(scope["query_string"].decode("utf-8"))
+        query_params = parse_qs(scope["query_string"].decode())
         token = query_params["token"][0]
         scope["token"] = token
         scope["user"] = await get_user(scope)
