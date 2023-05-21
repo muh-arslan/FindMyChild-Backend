@@ -145,8 +145,8 @@ class UpdateChildStatus(generics.UpdateAPIView):
 
                             notification = MatchNotification.objects.create(user_id=report.reporter.id,
                                                                             lost_child=report,
-                                                                            matching_child_id=matching_child_obj.id, descript="Match Report")
-
+                                                                            matching_child_id=matching_child_obj.id, description="Match Report")
+                            print(notification)
                             serialized_notification = MatchNotificationSerializer(
                                 notification).data
                             print(serialized_notification)
@@ -157,8 +157,8 @@ class UpdateChildStatus(generics.UpdateAPIView):
                                     "message": serialized_notification,
                                 },
                             )
-                        except Exception:
-                            print(Exception)
+                        except Exception as e:
+                            print(e)
         try:
             drop_notification = DropChildNotification.objects.create(type= "drop_child_success", description="Child is Received Successfully",user = founder, found_child = child  )
             serialized_drop_notification = DropChildNotificationSerializer(drop_notification).data
