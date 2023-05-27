@@ -1,23 +1,12 @@
-# chat/consumers.py
-
-   
-        # Get the user with whom the connection is made
-        #self.other_user_id = self.scope["url_route"]["kwargs"]["other_user_id"]
-        #self.other_user = User.objects.get(id=self.other_user_id)
-
-        # Create a unique channel name for the user pair
-        #self.room_name = f"chat_{min(self.user.id, self.other_user.id)}_{max(self.user.id, self.other_user.id)}"
-        # Join room group
-
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-# from .models import ChatRoom, Message
 from login_app.models import User
 from .models import DropChildNotification
 from .serializers import DropChildNotificationSerializer
+from chat_app.models import ChatRoom, Message
+from chat_app.serializers import ChatRoomSerializer, MessageSerializer
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
-# from .serializers import MessageSerializer
 
 
 class NotificationConsumer(AsyncJsonWebsocketConsumer):
@@ -39,23 +28,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 return 
         except Exception:
             print(Exception)
-        # self.room_id = f"{self.scope['url_route']['kwargs']['room_id']}"
-        # try:
-        #     self.chat_room = await sync_to_async(ChatRoom.objects.get)(id=self.room_id)
-        # except Exception:
-        #     raise Exception("Chat Room did not exists")
-        # if self.user.user_type == 'appUser':
-        #     self.appUser = self.user
-        #     orgUser_id = self.chat_room.orgUser_id
-        #     self.orgUser = await sync_to_async(User.objects.get)(id=orgUser_id)
-        # else:
-        #     appUser_id = self.chat_room.appUser_id
-        #     self.appUser = await sync_to_async(User.objects.get)(id=appUser_id)
-        #     self.orgUser = self.user
-        # print(">>>>>>>>>>>>>>>>>>>orgUser")
-        # print(self.appUser.id)
-        # print(">>>>>>>>>>>>>>>>>>>orgUser")
-        # print(self.orgUser.id)
         if self.user.is_superuser:
             self.user_channel_id = "admin_group"
             await self.channel_layer.group_add(self.user_channel_id, self.channel_name)
@@ -79,13 +51,16 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content, **kwargs):
         channel_layer = get_channel_layer()
-        print(channel_layer)
         message_type = content["type"]
-    #     if message_type == "greeting":
-    #         await self.send_json({
-    #             "type": "greeting_response",
-    #             "message": "How are you?",
-    #         })
+
+        if message_type == "send_chat_message":
+            message = await self.create_message(content)
+            await self.channel_layer.group_send(
+                content["receiver_id"], {
+                    "type": "receive_chat_message",
+                    "message": message,
+                },
+            )
         if message_type == "drop_child_request":
             drop_notification = await self.create_drop_child_notification(content)
             print(drop_notification)
@@ -96,6 +71,16 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
         return super().receive_json(content, **kwargs)
+    
+    @database_sync_to_async
+    def create_message(self, content):
+        try:
+            new_message = Message.objects.create(sender= self.user, reciever_id=content["receiver_id"], message=content["message"], chat_room_id=content["chat_room_id"])
+            serialized_message = MessageSerializer(new_message).data
+            return serialized_message
+        except Exception as e:
+            return e
+            
     
     @database_sync_to_async
     def create_drop_child_notification(self, content):
@@ -138,12 +123,6 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     #     #print(messages)
     #     return MessageSerializer(messages, many=True).data
         
-    
-    # def get_receiver(self):
-    #     if self.user.id != self.appUser.id:
-    #         return self.appUser
-    #     return self.orgUser
-        
-    # async def chat_message_echo(self, event):
-    #     print(event)
-    #     await self.send_json(event)
+    async def receive_chat_message(self, event):
+        print(event)
+        await self.send_json(event)

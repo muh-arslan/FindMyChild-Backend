@@ -13,14 +13,11 @@ class GenericFileUpload(models.Model):
 
 class ChatRoom(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    orgUser = models.ForeignKey(User, related_name="chat_org_user", on_delete=models.CASCADE)
-    room_name = models.CharField(max_length=255, null=True, blank=True)
-    channel_name = models.CharField(max_length=255, null=True, blank=True)
-    appUser = models.ForeignKey(User, related_name="chat_app_user", on_delete=models.CASCADE)
-    
-    
-    def __str__(self):
-        return self.room_name
+    users = models.ManyToManyField(User, related_name="chat_room")    
+    # room_name = models.CharField(max_length=255, null=True, blank=True)
+
+    # def __str__(self):
+    #     return self.room_name
     
 
 class Message(models.Model):

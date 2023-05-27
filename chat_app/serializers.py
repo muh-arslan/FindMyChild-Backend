@@ -18,28 +18,11 @@ class MessageAttachmentSerializer(serializers.ModelSerializer):
 
 class ChatRoomSerializer(serializers.ModelSerializer):
 
-    appUser = UserSerializer(read_only=True)
-    orgUser = UserSerializer(read_only=True)
+    users = UserSerializer(many=True)
     
     class Meta:
         model = ChatRoom
-        fields = "__all__"
-
-class ChatRoomsByUserSerializer(serializers.ModelSerializer):
-
-    appUser = serializers.SerializerMethodField()
-    orgUser = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ChatRoom
-        fields = ["id", "appUser", "orgUser"]
-
-    def get_appUser(self, obj):
-        return {"id": obj.appUser.id, "first_name": obj.appUser.first_name}
-
-    def get_orgUser(self, obj):
-        return {"id": obj.orgUser.id, "first_name": obj.orgUser.first_name}
-        
+        fields = "__all__"        
 
 class MessageSerializer(serializers.ModelSerializer):
     # sender = UserSerializer(read_only=True)
