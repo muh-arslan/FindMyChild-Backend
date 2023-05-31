@@ -55,6 +55,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
         if message_type == "send_chat_message":
             message = await self.create_message(content)
+            print(message)
             await self.channel_layer.group_send(
                 content["receiver_id"], {
                     "type": "receive_chat_message",
@@ -75,7 +76,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def create_message(self, content):
         try:
-            new_message = Message.objects.create(sender= self.user, reciever_id=content["receiver_id"], message=content["message"], chat_room_id=content["chat_room_id"])
+            new_message = Message.objects.create(user= self.user, text=content["text"], chat_room_id=content["chat_room_id"])
             serialized_message = MessageSerializer(new_message).data
             return serialized_message
         except Exception as e:
@@ -114,6 +115,10 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(event)
 
     async def drop_child_success(self, event):
+        print(event)
+        await self.send_json(event)
+    
+    async def new_received_child(self, event):
         print(event)
         await self.send_json(event)
 

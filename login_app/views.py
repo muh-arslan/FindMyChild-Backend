@@ -34,6 +34,7 @@ from .email import send_otp_via_email
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.http import FileResponse
+import threading
 # Create your views here.
 
 
@@ -152,7 +153,9 @@ class RegisterUserView(CreateAPIView):
             user = user_serializer.save()
             if user.user_type == "orgUser":
                 OrgDetails.objects.create(user=user)
-                sendSignUpNotificaiton(user)
+                thread = threading.Thread(target=sendSignUpNotificaiton, args= (user,))
+                thread.start()
+                # sendSignUpNotificaiton(user)
             request.session.flush()
             return Response({"message": "User registered successfully"})
         else:

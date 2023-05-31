@@ -17,7 +17,91 @@ from notification_app.models import MatchNotification, DropChildNotification
 from notification_app.serializers import MatchNotificationSerializer, DropChildNotificationSerializer
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+import threading
 
+def sendMatchingNotificaitons(child, founder):
+    channel_layer = get_channel_layer()
+    try:
+        queryset = LostChild.objects.all()
+    except LostChild.DoesNotExist:
+        return Response({'error': 'No Lost Reports Found to Match with'}, status=404)
+    # get image encoding of the child
+    image_encoding = np.array(json.loads(child.image_encoding))
+    # iterate through all reports and check for matching faces
+    matched_reports = []
+    distances = []
+    for report in queryset:
+        if report.image_encoding is not None:
+            report_encoding = np.array(json.loads(report.image_encoding))
+        else:
+            report_encoding = None
+        print(report.child_name)
+        if child.gender == report.gender:
+            is_matched, distance = match_results(
+                image_encoding, report_encoding)
+            if report_encoding is not None and np.all(is_matched):
+                matched_reports.append(report)
+                distances.append(distance)
+                # match_obj = {
+                #     "recieved_child": model_to_dict(child),
+                #     "distance": distance
+                # }
+                # serialized_report = MatchingChildSerializer(data=match_obj)
+                # if serialized_report.is_valid(raise_exception=True):
+                #     matching_child_obj = serialized_report.save(
+                #         recieved_child=child)
+                matching_child_obj = MatchingChild.objects.create(recieved_child = child,
+                distance= distance)
+                try:
+                    report.matchingReports.reports.add(
+                        matching_child_obj)
+                    notification = MatchNotification.objects.create(user_id=report.reporter.id,
+                                                                    lost_child=report,
+                                                                    matching_child_id=matching_child_obj.id, description="Match Report")
+                    serialized_notification = MatchNotificationSerializer(
+                        notification).data
+                    print(serialized_notification)
+                    async_to_sync(channel_layer.group_send)(
+                        f"{report.reporter_id}",
+                        {
+                            "type": "match_found",
+                            "message": serialized_notification,
+                        },
+                    )
+                except Exception as e:
+                    print(e)
+    try:
+        drop_notification = DropChildNotification.objects.create(type= "drop_child_success", description="Child is Received Successfully",user = founder, found_child = child  )
+        serialized_drop_notification = DropChildNotificationSerializer(drop_notification).data
+        async_to_sync(channel_layer.group_send)(
+                            f"{founder.id}",
+                            {
+                                "type": "drop_child_success",
+                                "message": serialized_drop_notification,
+                            },
+                        )
+    except Exception as e:
+        return Exception(e)
+    
+    onlineAppUsers = User.objects.filter(user_type="appUser", online_status=True)
+    for user in onlineAppUsers:
+        try:
+            async_to_sync(channel_layer.group_send)(
+                            f"{user.id}",
+                            {
+                                "type": "new_received_child",
+                                "message": FoundChildSerializer(child).data,
+                            },
+                        )
+        except Exception as e:
+            print(e)
+    # serializer = LostChildSerializer(matched_reports, many=True)
+    # output_data = []
+    # for i, data in enumerate(serializer.data):
+    #     output_data.append({
+    #         'Child': OrderedDict(data.items()),
+    #         'distance': {'distance': distances[i]}
+    #     })
 
 class LostChildren(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticatedCustom, )
@@ -90,7 +174,7 @@ class LostChildCreate(generics.CreateAPIView):
         output_data = MatchingReportsSerializer(matchingReports_obj).data
         return Response(output_data)
 
-
+"""
 class UpdateChildStatus(generics.UpdateAPIView):
     serializer_class = FoundChildSerializer
     channel_layer = get_channel_layer()
@@ -181,7 +265,7 @@ class UpdateChildStatus(generics.UpdateAPIView):
             })
 
         return Response(output_data)
-
+"""
 
 class LostMatchedReports(APIView):
     channel_layer = get_channel_layer()
@@ -364,3 +448,26 @@ class ReportsByUser(generics.ListAPIView):
             serializer = self.serializer_class[key](queryset[key], many=True)
             serialized_data[key] = serializer.data
         return Response(serialized_data)
+
+
+class UpdateChildStatus(generics.UpdateAPIView):
+    serializer_class = FoundChildSerializer
+    channel_layer = get_channel_layer()
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def patch(self, request, format=None):
+        # get id of the FoundChild or LostChild object
+        report_id = request.data.get('report_id', None)
+
+        if not report_id:
+            return Response({'error': 'Object report_id not found'}, status=400)
+        found_report = FoundChild.objects.get(id=report_id)
+        orgUser = User.objects.get(id=request.user.id)
+        founder = found_report.reporter
+        found_report.reporter = orgUser
+        found_report.status = 'received'
+        found_report.save()
+        child = found_report
+        thread = threading.Thread(target=sendMatchingNotificaitons, args=(child, founder,))
+        thread.start()
+        return Response({'message': 'Child Status is successfuly updated'})

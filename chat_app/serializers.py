@@ -25,21 +25,16 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         fields = "__all__"        
 
 class MessageSerializer(serializers.ModelSerializer):
-    # sender = UserSerializer(read_only=True)
-    # reciever = UserSerializer(read_only=True)
-    sender = serializers.SerializerMethodField()
-    reciever = serializers.SerializerMethodField()
+    _id = serializers.UUIDField(source='id')
+    user = serializers.SerializerMethodField()
     chat_room = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = "__all__"
+        fields = ('_id', 'user', 'chat_room', 'text', 'createdAt', 'updated_at')
     
-    def get_sender(self, obj):
-        return {"id": str(obj.sender.id), "first_name": obj.sender.first_name}
-
-    def get_reciever(self, obj):
-        return {"id": str(obj.reciever.id), "first_name": obj.reciever.first_name}
+    def get_user(self, obj):
+        return {"_id": str(obj.user.id), "first_name": obj.user.first_name}
     
     def get_chat_room(self, obj):
         return str(obj.chat_room.id)

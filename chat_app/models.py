@@ -22,21 +22,19 @@ class ChatRoom(BaseModel):
 
 class Message(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    sender = models.ForeignKey(
+    user = models.ForeignKey(
         User, related_name="message_sender", on_delete=models.CASCADE)
-    reciever = models.ForeignKey(
-        User, related_name="message_reciever", on_delete=models.CASCADE)
     chat_room = models.ForeignKey(ChatRoom, related_name="message", on_delete=models.CASCADE)
-    message = models.TextField(blank=True, null=True)
+    text = models.TextField(blank=True, null=True)
     is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"message between {self.sender.email} and {self.reciever.email}"
 
     class Meta:
-        ordering = ("-created_at",)
+        ordering = ("createdAt",)
 
 
 class MessageAttachment(models.Model):
@@ -45,7 +43,7 @@ class MessageAttachment(models.Model):
     attachment = models.ForeignKey(
         GenericFileUpload, related_name="message_uploads", on_delete=models.CASCADE)
     caption = models.CharField(max_length=255, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ("created_at",)
+        ordering = ("createdAt",)
