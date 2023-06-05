@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import MatchNotification, DropChildNotification, OrgVerifyNotification
+from .models import MatchNotification, DropChildNotification, OrgVerifyNotification, ContactUs, FeedbackReview
 from lostchildren.serializers import MatchingChildSerializer
 
 
@@ -21,7 +21,7 @@ class MatchNotificationSerializer(serializers.ModelSerializer):
 
     def get_lost_child(self, obj):
         return {"id": str(obj.lost_child.id), "child_name": obj.lost_child.child_name,
-            "image": obj.lost_child.image.url}
+                "image": obj.lost_child.image.url}
 
 
 class SimpeMatchNotificationSerializer(serializers.ModelSerializer):
@@ -74,3 +74,15 @@ class OrgVerifyNotificationSerializer(serializers.ModelSerializer):
 
     def get_org_user(self, obj):
         return {"id": str(obj.org_user.id), "first_name": obj.org_user.first_name, "last_name": obj.org_user.last_name}
+
+
+class ContactUsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactUs
+        fields = ['name', 'email', 'message']
+
+
+class FeedbackReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeedbackReview
+        fields = ['rating', 'feedback']

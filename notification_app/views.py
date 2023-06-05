@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, views
 from channels.layers import get_channel_layer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -6,7 +6,7 @@ from channels.db import database_sync_to_async
 from .consumers import NotificationConsumer
 from .models import MatchNotification, DropChildNotification
 from login_app.models import User
-from .serializers import MatchNotificationSerializer, DropChildNotificationSerializer
+from .serializers import MatchNotificationSerializer, DropChildNotificationSerializer, ContactUsSerializer, FeedbackReviewSerializer
 from findmychild.custom_methods import IsAuthenticatedCustom
 from django.shortcuts import get_object_or_404
 
@@ -26,7 +26,7 @@ from django.shortcuts import get_object_or_404
 #         else:
 #             appUser = other_user
 #             orgUser = user
-        
+
 #         data["room_name"] = f"chat_{min(user.first_name, other_user.first_name)}_{max(user.first_name, other_user.first_name)}"
 #         serializer = self.serializer_class(data = data)
 #         if serializer.is_valid():
@@ -42,11 +42,11 @@ from django.shortcuts import get_object_or_404
 #     def list(self, request, *args, **kwargs):
 #         user = request.user
 #         matchNotifications = MatchNotification.objects.filter(user_id = user.id)
-        
+
 #         serializedNotifications = MatchNotificationSerializer(matchNotifications, many=True).data
-            
+
 #         return Response(serializedNotifications)
-    
+
 
 class ListUserNotificationsView(generics.ListAPIView):
     permission_classes = (IsAuthenticatedCustom,)
@@ -72,3 +72,19 @@ class ListUserNotificationsView(generics.ListAPIView):
         return Response(serialized_data)
 
 
+class ContactUsView(views.APIView):
+    def post(self, request):
+        serializer = ContactUsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FeedbackReviewView(views.APIView):
+    def post(self, request):
+        serializer = FeedbackReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
