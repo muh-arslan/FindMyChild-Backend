@@ -5,18 +5,17 @@ from .models import LostChild, FoundChild, MatchingChild, MatchingReports
 class BaseChildSerializer(serializers.ModelSerializer):
     class Meta:
         abstract = True
-        exclude = ['image_encoding']
-        # fields = '__all__'
-
-    def create(self, validated_data):
-        # Create the child object
-        child = super().create(validated_data)
-        # Generate the face encodings for the child
-        child.generate_face_encodings()
-        # Save the child object
-        child.save()
-        # Return the child object
-        return child
+        # exclude = ['image_encoding']
+        fields = '__all__'
+    # def create(self, validated_data):
+    #     # Create the child object
+    #     child = super().create(validated_data)
+    #     # Generate the face encodings for the child
+    #     child.generate_face_encodings()
+    #     # Save the child object
+    #     child.save()
+    #     # Return the child object
+    #     return child
 
 
 class LostChildSerializer(BaseChildSerializer):
