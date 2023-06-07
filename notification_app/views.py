@@ -81,10 +81,29 @@ class ContactUsView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# class FeedbackReviewView(views.APIView):
+#     permission_classes = (IsAuthenticatedCustom, )
+
+#     def post(self, request):
+#         data = request.data
+#         data['user'] = request.user
+#         serializer = FeedbackReviewSerializer(data=data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         print(serializer.errors)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class FeedbackReviewView(views.APIView):
+    permission_classes = (IsAuthenticatedCustom, )
+
     def post(self, request):
-        serializer = FeedbackReviewSerializer(data=request.data)
+        data = request.data.copy()
+        print("data: ", data)
+        data['user'] = request.user.id
+        serializer = FeedbackReviewSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

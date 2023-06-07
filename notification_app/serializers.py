@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import MatchNotification, DropChildNotification, OrgVerifyNotification, ContactUs, FeedbackReview
 from lostchildren.serializers import MatchingChildSerializer
+from login_app.serializers import UserSerializer
 
 
 class MatchNotificationSerializer(serializers.ModelSerializer):
@@ -83,6 +84,8 @@ class ContactUsSerializer(serializers.ModelSerializer):
 
 
 class FeedbackReviewSerializer(serializers.ModelSerializer):
+    # user = UserSerializer(read_only=True)
+
     class Meta:
         model = FeedbackReview
-        fields = ['rating', 'feedback']
+        fields = "__all__"

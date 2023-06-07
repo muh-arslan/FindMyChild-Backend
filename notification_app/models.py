@@ -66,8 +66,8 @@ class ContactUs(models.Model):
 class FeedbackReview(models.Model):
     user = models.ForeignKey(
         User, related_name="user_feedback", on_delete=models.CASCADE)
-    rating = models.IntegerField()
-    feedback = models.TextField()
+    rating = models.IntegerField(blank=True, null=True)
+    feedback = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Rating: {self.rating} - Feedback: {self.feedback}"
