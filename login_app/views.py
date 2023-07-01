@@ -1,7 +1,7 @@
 from django.http import HttpResponseBadRequest
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView, RetrieveAPIView, ListAPIView
-from .models import User, Jwt, OrgDetails
+from rest_framework.generics import CreateAPIView, RetrieveAPIView, ListAPIView, UpdateAPIView
+from .models import User, Jwt, AgencyProfile, AppUserProfile, Role
 from notification_app.models import OrgVerifyNotification
 from notification_app.serializers import OrgVerifyNotificationSerializer
 from django.dispatch import receiver
@@ -13,9 +13,11 @@ from .serializers import (
     LoginSerializer,
     ChangePasswordSerializer,
     RefreshSerializer,
-    OrgDetailsSerializer,
-    SimpleOrgUserSerializer
+    SimpleOrgUserSerializer,
+    AgencyProfileSerializer,
+    AppUserProfileSerializer
 )
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.forms.models import model_to_dict
 from rest_framework.response import Response
 from django_rest_passwordreset.signals import reset_password_token_created
@@ -23,7 +25,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.core.mail import EmailMessage
-from rest_framework.authtoken.models import Token
 import random
 import string
 import jwt
@@ -151,10 +152,10 @@ class RegisterUserView(CreateAPIView):
             data=data, context={'request': request})
         if user_serializer.is_valid():
             user = user_serializer.save()
-            if user.user_type == "orgUser":
-                OrgDetails.objects.create(user=user)
-                thread = threading.Thread(target=sendSignUpNotificaiton, args= (user,))
-                thread.start()
+            # if user.user_type == "orgUser":
+            #     OrgDetails.objects.create(user=user)
+            #     thread = threading.Thread(target=sendSignUpNotificaiton, args= (user,))
+            #     thread.start()
                 # sendSignUpNotificaiton(user)
             request.session.flush()
             return Response({"message": "User registered successfully"})
@@ -285,23 +286,23 @@ class ListLoggedInUser(RetrieveAPIView):
             return Response(e)
 
 
-class ListLoggedInOrgUser(RetrieveAPIView):
-    serializer_class = OrgDetailsSerializer
-    permission_classes = (IsAuthenticatedCustom, )
+# class ListLoggedInOrgUser(RetrieveAPIView):
+#     serializer_class = OrgDetailsSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
 
-    def get(self, request):
-        try:
-            # print (reset_password_token.user.email)
-            try:
-                org_user = OrgDetails.objects.get(user=request.user)
-            except:
-                org_user = OrgDetails.objects.create(user=request.user)
-            if org_user:
-                response = self.serializer_class(org_user).data
-                print(response)
-            return Response(response)
-        except Exception as e:
-            return print(e)
+#     def get(self, request):
+#         try:
+#             # print (reset_password_token.user.email)
+#             try:
+#                 org_user = OrgDetails.objects.get(user=request.user)
+#             except:
+#                 org_user = OrgDetails.objects.create(user=request.user)
+#             if org_user:
+#                 response = self.serializer_class(org_user).data
+#                 print(response)
+#             return Response(response)
+#         except Exception as e:
+#             return print(e)
 
 
 """
@@ -314,100 +315,134 @@ def user_profile_photo_view(request, user_id):
     file_path = user.profile_photo.path
     return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
 
-
-class UpdateLoggedInUser(RetrieveAPIView):
+class UpdateLoggedInUser(UpdateAPIView):
+    queryset = User.objects.all()
     serializer_class = UserSerializer
+    parser_classes = [MultiPartParser, FormParser]
     permission_classes = (IsAuthenticatedCustom, )
 
-    def patch(self, request):
-        try:
-            # print (reset_password_token.user.email)
-            logged_user = User.objects.get(email=request.user.email)
-            updated_user = request.data
-            if logged_user:
-                for key, value in updated_user.items():
-                    setattr(logged_user, key, value)
-                logged_user.save()
-                response = self.serializer_class(
-                    logged_user, context={"request": request}).data
-            return Response(response)
-        except Exception as e:
-            return Response(e)
+    def patch(self, request, *args, **kwargs):
+        user_instance = request.user
+        user_serializer = self.get_serializer(user_instance, data=request.data, partial=True)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.save()
+
+        if user.role == Role.AGENCY:
+            profile_instance = user.agency  # Assuming a one-to-one relationship between User and Profile
+            profile_serializer = AgencyProfileSerializer(profile_instance, data=request.data, partial=True)
+            profile_serializer.is_valid(raise_exception=True)
+            profile_serializer.save()
+
+            return Response(user_serializer.data)
+        
+        profile_instance = user.appUser  # Assuming a one-to-one relationship between User and Profile
+        profile_serializer = AppUserProfileSerializer(profile_instance, data=request.data, partial=True)
+        profile_serializer.is_valid(raise_exception=True)
+        profile_serializer.save()
+
+        return Response(user_serializer.data)
+
+# class UpdateLoggedInUser(RetrieveAPIView):
+#     serializer_class = UserSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
+
+#     def patch(self, request):
+#         try:
+#             # print (reset_password_token.user.email)
+#             logged_user = User.objects.get(email=request.user.email)
+#             updated_user = request.data
+#             if logged_user:
+#                 for key, value in updated_user.items():
+#                     setattr(logged_user, key, value)
+#                 logged_user.save()
+#                 response = self.serializer_class(
+#                     logged_user, context={"request": request}).data
+#             return Response(response)
+#         except Exception as e:
+#             return Response(e)
 
 
-class UpdateLoggedInOrgUser(RetrieveAPIView):
-    serializer_class = OrgDetailsSerializer
-    permission_classes = (IsAuthenticatedCustom, )
+# class UpdateLoggedInOrgUser(RetrieveAPIView):
+#     serializer_class = OrgDetailsSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
 
-    def patch(self, request):
-        try:
-            # print (reset_password_token.user.email)
-            org_user = OrgDetails.objects.get(user=request.user)
-            updated_user = request.data
-            for key, value in updated_user.items():
-                setattr(org_user, key, value)
-                setattr(org_user.user, key, value)
-                org_user.save()
-                response = self.serializer_class(
-                    org_user, context={"request": request}).data
-            return Response(response)
-        except Exception as e:
-            return Response(e)
-
-
-class ListAllOrgUser(ListAPIView):
-    serializer_class = OrgDetailsSerializer
-    permission_classes = (IsAuthenticatedCustom, )
-
-    def get_queryset(self):
-        users = User.objects.filter(user_type="orgUser")
-        queryset = OrgDetails.objects.filter(user__in=users)
-        return queryset
-
-    def list(self, request, *args, **kwargs):
-        try:
-            queryset = self.get_queryset()
-            print(queryset)
-            if queryset:
-                response = self.serializer_class(queryset, many=True).data
-            return Response(response)
-        except Exception as e:
-            return Response(e)
+#     def patch(self, request):
+#         try:
+#             # print (reset_password_token.user.email)
+#             org_user = OrgDetails.objects.get(user=request.user)
+#             updated_user = request.data
+#             for key, value in updated_user.items():
+#                 setattr(org_user, key, value)
+#                 setattr(org_user.user, key, value)
+#                 org_user.save()
+#                 response = self.serializer_class(
+#                     org_user, context={"request": request}).data
+#             return Response(response)
+#         except Exception as e:
+#             return Response(e)
 
 
-class ListAllUser(ListAPIView):
+# class ListAllOrgUser(ListAPIView):
+#     serializer_class = OrgDetailsSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
+
+#     def get_queryset(self):
+#         users = User.objects.filter(user_type="orgUser")
+#         queryset = OrgDetails.objects.filter(user__in=users)
+#         return queryset
+
+#     def list(self, request, *args, **kwargs):
+#         try:
+#             queryset = self.get_queryset()
+#             print(queryset)
+#             if queryset:
+#                 response = self.serializer_class(queryset, many=True).data
+#             return Response(response)
+#         except Exception as e:
+#             return Response(e)
+
+class AppUserUserListView(ListAPIView):
+    queryset = User.objects.filter(role = Role.APPUSER)
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticatedCustom, )
 
-    def get_queryset(self):
-        queryset = User.objects.filter(user_type="appUser")
-        return queryset
-
-    def list(self, request, *args, **kwargs):
-        try:
-            queryset = self.get_queryset()
-            print(queryset)
-            if queryset:
-                response = self.serializer_class(queryset, many=True).data
-            return Response(response)
-        except Exception as e:
-            return Response(e)
+class AgencyUserListView(ListAPIView):
+    queryset = User.objects.filter(role = Role.AGENCY)
+    serializer_class = UserSerializer
 
 
-class OrgUserDetails(APIView):
-    serializer_class = OrgDetailsSerializer
-    permission_classes = (IsAuthenticatedCustom, )
+# class ListAllUser(ListAPIView):
+#     serializer_class = UserSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
 
-    def get(self, request, *args, **kwargs):
-        org_user_id = kwargs.get("id")
-        user = User.objects.get(id=org_user_id)
-        queryset = OrgDetails.objects.get(user=user)
-        try:
-            if queryset:
-                response = self.serializer_class(queryset).data
-            return Response(response)
-        except Exception as e:
-            return Response(e)
+#     def get_queryset(self):
+#         queryset = User.objects.filter(user_type="appUser")
+#         return queryset
+
+#     def list(self, request, *args, **kwargs):
+#         try:
+#             queryset = self.get_queryset()
+#             print(queryset)
+#             if queryset:
+#                 response = self.serializer_class(queryset, many=True).data
+#             return Response(response)
+#         except Exception as e:
+#             return Response(e)
+
+
+# class OrgUserDetails(APIView):
+#     serializer_class = OrgDetailsSerializer
+#     permission_classes = (IsAuthenticatedCustom, )
+
+#     def get(self, request, *args, **kwargs):
+#         org_user_id = kwargs.get("id")
+#         user = User.objects.get(id=org_user_id)
+#         queryset = OrgDetails.objects.get(user=user)
+#         try:
+#             if queryset:
+#                 response = self.serializer_class(queryset).data
+#             return Response(response)
+#         except Exception as e:
+#             return Response(e)
 
 
 class UnverifiedOrgs(ListAPIView):

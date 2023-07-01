@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import User, OrgDetails
+from .models import User, AgencyProfile, AppUserProfile
 # Register your models here.
 
 admin.site.register(User)
-admin.site.register(OrgDetails)
+admin.site.register(AgencyProfile)
+admin.site.register(AppUserProfile)

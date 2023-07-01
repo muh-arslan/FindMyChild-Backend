@@ -1,45 +1,60 @@
 from django.shortcuts import render
 from rest_framework import viewsets, generics
-from findmychild.custom_methods import IsAuthenticatedAdmin
-from lostchildren.models import LostChild, FoundChild, MatchingReports
-from lostchildren.serializers import LostChildSerializer, FoundChildSerializer, MatchingReportsSerializer
-from login_app.models import User, OrgDetails
-from login_app.serializers import UserSerializer, OrgDetailsSerializer
+from findmychild.custom_methods import IsAuthenticatedAdmin, PermissionRequiredCustom
+from lostchildren.models import LostChild, FoundChild, ReceivedChild
+from lostchildren.serializers import ReportSerializer
+from login_app.models import User, Role
+from login_app.serializers import UserSerializer
 from django.contrib import admin
 from django.db.models import Count
 from django.utils import timezone
 from django.db.models.functions import ExtractMonth
 from django.http import JsonResponse
-
+from rest_framework.permissions import DjangoModelPermissions
+from rest_framework import permissions
+from rest_framework.response import Response
+from django.contrib.auth.mixins import PermissionRequiredMixin
 # Create your views here.
-class LostChildList(viewsets.ModelViewSet):
-
-    permission_classes = (IsAuthenticatedAdmin,)
-
+class LostChildList(PermissionRequiredCustom, generics.ListAPIView):
+     
     queryset = LostChild.objects.all()
-    serializer_class = LostChildSerializer
+    serializer_class = ReportSerializer
+    permission_required = 'lostchildren.view_lostchild'
+    # permission_classes = (IsAuthenticatedAdmin, PermissionRequiredCustom)
+    
+    # def get(self, request, *args, **kwargs):
+    #     if request.user.has_perm("lostchildren.view_lostchild"):
+    #         return super().get(request, *args, **kwargs)
+    #     return Response({"message": "Not Authorized"})
 
 
-class FoundChildList(viewsets.ModelViewSet):
+class FoundChildList(PermissionRequiredCustom, generics.ListAPIView):
 
-    permission_classes = (IsAuthenticatedAdmin,)
+    permission_required = 'lostchildren.view_foundchild'
 
     queryset = FoundChild.objects.all()
-    serializer_class = FoundChildSerializer
+    serializer_class = ReportSerializer
 
-class AppUserList(viewsets.ModelViewSet):
+class ReceivedChildList(PermissionRequiredCustom, generics.ListAPIView):
 
-    permission_classes = (IsAuthenticatedAdmin,)
+    permission_required = 'lostchildren.view_receivedchild'
 
-    queryset = User.objects.all()
+    queryset = ReceivedChild.objects.all()
+    serializer_class = ReportSerializer
+
+
+class AppUserUserListView(PermissionRequiredCustom, generics.ListAPIView):
+    permission_required = 'login_app.view_user'
+
+    queryset = User.objects.filter(role = Role.APPUSER)
     serializer_class = UserSerializer
 
-class MatchingReportsList(viewsets.ModelViewSet):
+class AgencyUserListView(PermissionRequiredCustom, generics.ListAPIView):
+    permission_required = 'login_app.view_user'
 
-    permission_classes = (IsAuthenticatedAdmin,)
+    queryset = User.objects.filter(role = Role.AGENCY)
+    serializer_class = UserSerializer
 
-    queryset = MatchingReports.objects.all()
-    serializer_class = MatchingReportsSerializer
 
 class GraphData(generics.ListAPIView):
 
@@ -95,9 +110,9 @@ class AnalyticsData(generics.ListAPIView):
         current_year = timezone.now().year
 
         # Calculate the count of Org users 
-        org_users_count = User.objects.filter( user_type="orgUser").count()
+        org_users_count = User.objects.filter( role=Role.AGENCY).count()
         # Calculate the count of App users 
-        app_users_count = User.objects.filter( user_type="appUser").count()
+        app_users_count = User.objects.filter( role=Role.APPUSER).count()
 
         # Calculate the count of lost reports 
         lost_reports_count = LostChild.objects.count()
@@ -105,7 +120,7 @@ class AnalyticsData(generics.ListAPIView):
         found_reports_count = FoundChild.objects.count()
 
         # Calculate the count of received reports 
-        received_reports_count = LostChild.objects.count()
+        received_reports_count = ReceivedChild.objects.count()
 
         # Calculate the count of Org users joined for each month of the current year
         org_users_joined_count = User.objects.filter(created_at__year=current_year, user_type="orgUser").annotate(

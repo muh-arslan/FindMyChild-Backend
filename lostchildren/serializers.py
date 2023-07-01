@@ -1,58 +1,59 @@
 from rest_framework import serializers
-from .models import LostChild, FoundChild, MatchingChild, MatchingReports
+from .models import LostChild, FoundChild, MatchingChild, Report
 
 
-class BaseChildSerializer(serializers.ModelSerializer):
+class ReportSerializer(serializers.ModelSerializer):
     class Meta:
-        abstract = True
+        model = Report
         # exclude = ['image_encoding']
         fields = '__all__'
-    # def create(self, validated_data):
-    #     # Create the child object
-    #     child = super().create(validated_data)
-    #     # Generate the face encodings for the child
-    #     child.generate_face_encodings()
-    #     # Save the child object
-    #     child.save()
-    #     # Return the child object
-    #     return child
+
+    def create(self, validated_data):
+        # Create the child object
+        child = super().create(validated_data)
+        # Generate the face encodings for the child
+        child.generate_face_encodings()
+        # Save the child object
+        child.save()
+        # Return the child object
+        return child
 
 
-class LostChildSerializer(BaseChildSerializer):
-    class Meta(BaseChildSerializer.Meta):
-        model = LostChild
+# class LostChildSerializer(BaseChildSerializer):
+#     class Meta(BaseChildSerializer.Meta):
+#         model = LostChild
 
 
-class FoundChildSerializer(BaseChildSerializer):
-    reporter = serializers.SerializerMethodField()
-    class Meta(BaseChildSerializer.Meta):
-        model = FoundChild
+# class FoundChildSerializer(BaseChildSerializer):
+#     # reporter = serializers.SerializerMethodField()
+#     class Meta(BaseChildSerializer.Meta):
+#         model = FoundChild
 
-    def get_reporter(self, obj):
-        return {"OrgName": obj.reporter.first_name, "OrgId": str(obj.reporter.id)}
+#     # def get_reporter(self, obj):
+#     #     return {"OrgName": obj.reporter.first_name, "OrgId": str(obj.reporter.id)}
 
-class ReceivedChildrenSerializer(BaseChildSerializer):
-    reporter = serializers.SerializerMethodField()
+# class ReceivedChildrenSerializer(BaseChildSerializer):
+#     reporter = serializers.SerializerMethodField()
     
-    class Meta(BaseChildSerializer.Meta):
-        model = FoundChild
+#     class Meta(BaseChildSerializer.Meta):
+#         model = FoundChild
 
-    def get_reporter(self, obj):
-        return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
+#     def get_reporter(self, obj):
+#         return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
     
 
 class MatchingChildSerializer(serializers.ModelSerializer):
-    recieved_child = FoundChildSerializer()
+    recieved_child = ReportSerializer()
 
     class Meta:
         model = MatchingChild
         fields = '__all__'
 
 
-class MatchingReportsSerializer(serializers.ModelSerializer):
-    lost_child = LostChildSerializer()
-    reports = MatchingChildSerializer(many=True)
+# class MatchingReportsSerializer(serializers.ModelSerializer):
+#     lost_child = LostChildSerializer()
+#     reports = MatchingChildSerializer(many=True)
 
-    class Meta:
-        model = MatchingReports
-        fields = '__all__'
+#     class Meta:
+#         model = MatchingReports
+#         fields = '__all__'

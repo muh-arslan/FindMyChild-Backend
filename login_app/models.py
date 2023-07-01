@@ -1,14 +1,8 @@
 from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import AbstractUser
-from django.dispatch import receiver
-from django.urls import reverse
-from django_rest_passwordreset.signals import reset_password_token_created
-from django.core.mail import send_mail
-from django.core.mail import EmailMessage
+from django.contrib.auth.models import AbstractUser, Group
 from django.utils import timezone
-from baseModel.base_model import BaseModel
 from uuid import uuid4
 
 
@@ -48,34 +42,83 @@ class CustomUserManager(BaseUserManager):
 def user_profile_photo_path(instance, filename):
     return f'pictures/{instance.id}/{filename}'
 
+class Role(models.TextChoices):
+        ADMIN = "ADMIN", "Admin"
+        AGENCY = "AGENCY", "Agency"
+        APPUSER = "APPUSER", "AppUser"
 
-class User(AbstractUser, BaseModel):
+class User(AbstractUser):
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    role = models.CharField(max_length=50, choices=Role.choices)
     username = None
     email = models.EmailField(_('email address'), unique=True)
-    first_name = models.CharField(max_length=256, null=True, blank=True)
-    last_name = models.CharField(max_length=256, null=True, blank=True)
+    is_online = models.DateTimeField(default=timezone.now, null=True, blank=True)
+    # Field to associate user with groups
+    groups = models.ManyToManyField(Group, blank=True)
+    online_status = models.BooleanField(default=False, null=True, blank=True)
     profile_photo = models.ImageField(
         blank=True, upload_to=user_profile_photo_path)
-    phone_no = models.CharField(max_length=20, null=True, blank=True)
-    provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
-        'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
-    province = models.CharField(
-        max_length=18, choices=provinces_choices, null=True, blank=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    online_status = models.BooleanField(default=False, null=True, blank=True)
-    is_online = models.DateTimeField(
-        default=timezone.now, null=True, blank=True)
-    user_type = models.CharField(max_length=10, choices=[(
-        'appUser', 'AppUser'), ('orgUser', 'OrgUser')], default="appUser")
-    address = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    modified_at = models.DateTimeField(
+        auto_now=True
+    )
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
-
+    
+    @property
+    def is_authenticated(self):
+        return True
+    
     def __str__(self):
         return self.email
+
+class AppUserProfile(models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    user = models.OneToOneField(User,related_name= 'appUser', on_delete=models.CASCADE)
+    address = models.TextField(null=True, blank=True)
+    phone_no = models.CharField(max_length=20, null=True, blank=True)
+
+    def __str__(self):
+        return self.user.first_name
+    
+    class Meta:
+        verbose_name = 'AppUser'
+        verbose_name_plural = 'AppUsers'
+
+class AgencyProfile(models.Model):
+
+    provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
+        'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
+    
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    user = models.OneToOneField(User,related_name= 'agency', on_delete=models.CASCADE)
+    address = models.TextField(null=True, blank=True)
+    phone_no = models.CharField(max_length=20, null=True, blank=True)
+    province = models.CharField(
+        max_length=18, choices=provinces_choices, null=True, blank=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    about = models.TextField(blank=True, null=True)
+    slogan = models.TextField(blank=True, null=True)
+    website = models.URLField(max_length=200, blank=True, null=True)
+    zip_code = models.CharField(max_length=20, blank=True, null=True)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True)
+
+    def __str__(self):
+        return self.user.first_name
+    
+    class Meta:
+        verbose_name = 'Agency'
+        verbose_name_plural = 'Agencies'
 
 
 # class Favorite(models.Model):
@@ -89,24 +132,6 @@ class User(AbstractUser, BaseModel):
 #     class Meta:
 #         ordering = ("created_at",)
 
-
-class OrgDetails(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.OneToOneField(
-        User, related_name="org_details", on_delete=models.CASCADE)
-    about = models.TextField(blank=True, null=True)
-    slogan = models.TextField(blank=True, null=True)
-    website = models.URLField(max_length=200, blank=True, null=True)
-    zip_code = models.CharField(max_length=20, blank=True, null=True)
-    latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True)
-    longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.user.email
 
 
 class Jwt(models.Model):

@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_serializer, OpenApiParameter, OpenApiExample
 from .models import(
-    User, OrgDetails
+    User, AgencyProfile, AppUserProfile, Role
 )
+from django.contrib.auth.models import Group
 from django.core import validators
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,10 +21,18 @@ class UserSerializer(serializers.ModelSerializer):
         if validated_data['confirmPassword'] == validated_data['password']:
             # deleting the 'confirmPassword' key from dict 'validated_data' so user can be created
             del validated_data['confirmPassword']
+            role = validated_data.get("role", None)  # Get the role from validated_data
             user = User.objects.create(**validated_data)
+            groups = []
+            if role == Role.APPUSER:
+                groups = [Group.objects.get(name="appUser_group")]
+            elif role == Role.AGENCY:
+                groups = [Group.objects.get(name="agency_group")]
+                user.is_active = False
             # hashing the password for security
             user.set_password(user.password)
             user.save()
+            user.groups.set(groups)
             return user
         else:
             raise serializers.ValidationError({'Password': 'Passwords did not match'})
@@ -44,13 +53,22 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(max_length=200)
 
-class OrgDetailsSerializer(serializers.ModelSerializer):
+
+class AppUserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
-        model = OrgDetails
+        model = AppUserProfile
         fields = "__all__"
-    
+
+
+class AgencyProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = AgencyProfile
+        fields = "__all__"
+
 
 class RequestChangePasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()

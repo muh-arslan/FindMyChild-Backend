@@ -1,6 +1,7 @@
 from django.urls import path, include
 from django.conf import settings
-from .views import RegisterUserView, LoginView, LogoutView, ChangePasswordView, ListLoggedInUser, RefreshView, ListLoggedInOrgUser, ListAllOrgUser, ListAllUser, ForgotPassword, UnverifiedOrgs, VerifyOrgUser, UpdateLoggedInUser, UpdateLoggedInOrgUser, user_profile_photo_view
+from .views import RegisterUserView, LoginView, LogoutView, ChangePasswordView, ListLoggedInUser, RefreshView, AppUserUserListView, ForgotPassword, UnverifiedOrgs, VerifyOrgUser, UpdateLoggedInUser, user_profile_photo_view
+# ListLoggedInOrgUser, ListAllOrgUser,UpdateLoggedInOrgUser
 from django.conf.urls.static import static
 
 urlpatterns = [
@@ -12,16 +13,16 @@ urlpatterns = [
     path('change-password-view', ChangePasswordView.as_view(),
          name='change_password'),
     path('profile', ListLoggedInUser.as_view(), name='logged_in_user_data'),
-    path('org-profile', ListLoggedInOrgUser.as_view(),
-         name='logged_in_org_user_data'),
+#     path('org-profile', ListLoggedInOrgUser.as_view(),
+#          name='logged_in_org_user_data'),
 
     path('update-profile', UpdateLoggedInUser.as_view(),
          name='update_logged_in_user'),
-    path('update-org-profile', UpdateLoggedInOrgUser.as_view(),
-         name='update_logged_in_org_user'),
+#     path('update-org-profile', UpdateLoggedInOrgUser.as_view(),
+#          name='update_logged_in_org_user'),
 
-    path('all-orgs', ListAllOrgUser.as_view(), name='all_org_user_data'),
-    path('all-app-users', ListAllUser.as_view(), name='all_app_user_data'),
+#     path('all-orgs', ListAllOrgUser.as_view(), name='all_org_user_data'),
+    path('all-app-users', AppUserUserListView.as_view(), name='all_app_user_data'),
     path('unverified-orgs', UnverifiedOrgs.as_view(), name='unverified_orgs'),
     path('verify-org-user', VerifyOrgUser.as_view(), name='verify_org_user'),
     path('user/profile-photo/<uuid:user_id>/',
