@@ -142,7 +142,8 @@ def createMatches(child):
                     distance= distance)
     matching_children = MatchingChild.objects.filter(lost_child = child)
     matched_reports = MatchingChildSerializer(matching_children, many=True)
-    return matched_reports
+    
+    return matched_reports.data
     # return Response(matched_reports.data, status=status.HTTP_200_OK)
     # print(model_to_dict(matchingReports_obj))
     # return MatchingReportsSerializer(matchingReports_obj).data
@@ -187,7 +188,10 @@ class LostChildCreate(generics.CreateAPIView):
     serializer_class = ReportSerializer
 
     def post(self, request, format=None):
+        request.data['reporter'] = request.user
         reportData = request.data
+        print(reportData)
+        # reportData.pop("date")
         # reportData["reporter"] = request.user.id
         serializer = self.serializer_class(data=reportData)
         serializer.is_valid(raise_exception=True)
@@ -240,6 +244,7 @@ class LostChildCreate(generics.CreateAPIView):
         # # print(model_to_dict(matchingReports_obj))
         # output_data = MatchingReportsSerializer(matchingReports_obj).data
         output_data = createMatches(child)
+
         return Response(output_data)
 
 class ReceivedChildCreate(generics.CreateAPIView):
@@ -247,6 +252,7 @@ class ReceivedChildCreate(generics.CreateAPIView):
     serializer_class = ReportSerializer
 
     def post(self, request, format=None):
+        request.data['reporter'] = request.user
         reportData = request.data
         # reportData["reporter"] = request.user.id
         serializer = self.serializer_class(data=reportData)

@@ -14,8 +14,8 @@ urlpatterns = [
     path('all-app-users', AppUserUserListView.as_view(), name='all_app_user_data'),
     path('all-agency-users', AgencyUserListView.as_view(), name='all_agencies_data'),
     path('lost-children', LostChildList.as_view(), name= "lost_children"),
-    path('received-children', ReceivedChildList.as_view(), name= "lost_children"),
-    path('found-children', FoundChildList.as_view(), name= "lost_children")
+    path('received-children', ReceivedChildList.as_view(), name= "received_children"),
+    path('found-children', FoundChildList.as_view(), name= "found_children")
     
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -74,7 +74,7 @@ def decodeJWT(bearer):
 
 def sendSignUpNotificaiton(user):
     channel_layer = get_channel_layer()
-    admin = User.objects.get(is_superuser=True)
+    admin = User.objects.filter(is_staff=True).first()
     notification = OrgVerifyNotification.objects.create(
         type="verification_request", user_id=admin.id, description="Verification Request", org_user=user)
     serialized_notification = OrgVerifyNotificationSerializer(
@@ -152,10 +152,11 @@ class RegisterUserView(CreateAPIView):
             data=data, context={'request': request})
         if user_serializer.is_valid():
             user = user_serializer.save()
-            # if user.user_type == "orgUser":
-            #     OrgDetails.objects.create(user=user)
-            #     thread = threading.Thread(target=sendSignUpNotificaiton, args= (user,))
-            #     thread.start()
+            if user.role == Role.AGENCY:
+                print("Agency User Yesssss")
+                AgencyProfile.objects.create(user=user)
+                thread = threading.Thread(target=sendSignUpNotificaiton, args= (user,))
+                thread.start()
                 # sendSignUpNotificaiton(user)
             request.session.flush()
             return Response({"message": "User registered successfully"})
@@ -388,7 +389,7 @@ class UpdateLoggedInUser(UpdateAPIView):
 #     permission_classes = (IsAuthenticatedCustom, )
 
 #     def get_queryset(self):
-#         users = User.objects.filter(user_type="orgUser")
+#         users = User.objects.filter(role=Role.AGENCY)
 #         queryset = OrgDetails.objects.filter(user__in=users)
 #         return queryset
 
@@ -416,7 +417,7 @@ class AgencyUserListView(ListAPIView):
 #     permission_classes = (IsAuthenticatedCustom, )
 
 #     def get_queryset(self):
-#         queryset = User.objects.filter(user_type="appUser")
+#         queryset = User.objects.filter(role=Role.AGENCY)
 #         return queryset
 
 #     def list(self, request, *args, **kwargs):
@@ -452,7 +453,7 @@ class UnverifiedOrgs(ListAPIView):
     serializer_class = SimpleOrgUserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(user_type="orgUser", is_staff=False)
+        return User.objects.filter(role=Role.AGENCY, is_active=False)
 
     def list(self, request, *args, **kwargs):
         try:
@@ -470,14 +471,14 @@ class VerifyOrgUser(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            orgUserId = request.data["id"]
-            orgUser = User.objects.get(id=orgUserId)
-            print(orgUser)
-            orgUser.is_staff = True
-            orgUser.save()
-            serialized_user = self.serializer_class(orgUser).data
+            agencyId = request.data["id"]
+            agency = User.objects.get(id=agencyId)
+            print(agency)
+            agency.is_active = True
+            agency.save()
+            serialized_user = self.serializer_class(agency).data
             async_to_sync(self.channel_layer.group_send)(
-                f"{orgUser.id}",
+                f"{agency.id}",
                 {
                     "type": "verification_success",
                     "message": serialized_user,

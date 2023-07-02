@@ -28,7 +28,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                 return 
         except Exception:
             print(Exception)
-        if self.user.is_superuser:
+        if self.user.is_staff:
             self.user_channel_id = "admin_group"
             await self.channel_layer.group_add(self.user_channel_id, self.channel_name)
         else:            
