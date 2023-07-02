@@ -45,7 +45,7 @@ def get_random(length):
 
 def get_access_token(payload):
     return jwt.encode(
-        {"exp": datetime.now() + timedelta(minutes=5), **payload},
+        {"exp": datetime.now() + timedelta(minutes=15), **payload},
         settings.SECRET_KEY,
         algorithm="HS256"
     )
@@ -220,18 +220,19 @@ class LoginView(APIView):
                 Jwt.objects.filter(user_id=user.id).delete()
                 access = get_access_token({"user_id": str(user.id)})
                 refresh = get_refresh_token()
-                response = dict()
-                response["message"] = "User logged in succesfully"
-                response["user"] = UserSerializer(user).data
-                response["status"] = "success"
-                response["token"] = access
-                response["refresh"] = refresh
+                data = dict()
+                data["message"] = "User logged in succesfully"
+                data["user"] = UserSerializer(user).data
+                data["status"] = "success"
+                data["token"] = access
+                data["refresh"] = refresh
 
                 Jwt.objects.create(
                     user_id=user.id, access=access, refresh=refresh
                 )
-                print(response)
-                return Response(response)
+                response = Response(data)
+                response.set_cookie('refresh_token', refresh, httponly=True, expires=datetime.now() + timedelta(days=30))
+                return response
             return Exception("Password did not Matched")
         except Exception as e:
             return Exception("Error Signing In")

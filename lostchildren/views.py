@@ -6,13 +6,13 @@ from django.http import HttpResponse
 from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from findmychild.custom_methods import IsAuthenticatedCustom
+from findmychild.custom_methods import IsAuthenticatedCustom, PermissionRequiredCustom
 from rest_framework.response import Response
 from .models import LostChild, FoundChild, MatchingChild, ReceivedChild, Report
 from .serializers import ReportSerializer, MatchingChildSerializer
 from .face_recognizer import feature_extractor, match_results
 from django.forms.models import model_to_dict
-from login_app.models import User
+from login_app.models import User, Role
 from notification_app.models import MatchNotification, DropChildNotification
 from notification_app.serializers import MatchNotificationSerializer, DropChildNotificationSerializer
 from asgiref.sync import async_to_sync
@@ -75,7 +75,7 @@ def sendMatchingNotificaitons(child, founder):
     except Exception as e:
         return Exception(e)
     
-    onlineAppUsers = User.objects.filter(user_type="appUser", online_status=True)
+    onlineAppUsers = User.objects.filter(role=Role.APPUSER, online_status=True)
     for user in onlineAppUsers:
         try:
             async_to_sync(channel_layer.group_send)(
@@ -98,16 +98,16 @@ def sendMatchingNotificaitons(child, founder):
 def createMatches(child):
     # child.generate_face_encodings()
     # child.save()
-    try:
-        # queryset = FoundChild.objects.all()
-        queryset = FoundChild.objects.filter(status='received')
+    print("called")
+    queryset = ReceivedChild.objects.all()
+    if not queryset.exists():
         # try:
         #     matchingReports_obj = child.matchingReports
         # except Exception:
         #     matchingReports_obj = MatchingReports.objects.create(
         #         lost_child=child)
-    except FoundChild.DoesNotExist:
-        return Response({'error': 'No Received Reports Found to Match with'}, status=404)
+        print('No Received Reports Found to Match with')
+        return {'error': 'No Received Reports Found to Match with'}
     # get image encoding of the child
     image_encoding = np.array(json.loads(child.image_encoding))
     # iterate through all reports and check for matching faces
@@ -142,8 +142,8 @@ def createMatches(child):
                     distance= distance)
     matching_children = MatchingChild.objects.filter(lost_child = child)
     matched_reports = MatchingChildSerializer(matching_children, many=True)
-    
-    return Response(matched_reports.data, status=status.HTTP_200_OK)
+    return matched_reports
+    # return Response(matched_reports.data, status=status.HTTP_200_OK)
     # print(model_to_dict(matchingReports_obj))
     # return MatchingReportsSerializer(matchingReports_obj).data
         
@@ -158,6 +158,27 @@ class FoundChildren(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticatedCustom, )
 
     queryset = FoundChild.objects.all()
+    serializer_class = ReportSerializer
+
+class LostChildList(PermissionRequiredCustom, generics.ListAPIView):
+     
+    queryset = LostChild.objects.all()
+    serializer_class = ReportSerializer
+    permission_required = 'lostchildren.view_lostchild'
+
+
+class FoundChildList(PermissionRequiredCustom, generics.ListAPIView):
+
+    permission_required = 'lostchildren.view_foundchild'
+
+    queryset = FoundChild.objects.all()
+    serializer_class = ReportSerializer
+
+class ReceivedChildList(PermissionRequiredCustom, generics.ListAPIView):
+
+    permission_required = 'lostchildren.view_receivedchild'
+
+    queryset = ReceivedChild.objects.all()
     serializer_class = ReportSerializer
 
 
@@ -220,6 +241,24 @@ class LostChildCreate(generics.CreateAPIView):
         # output_data = MatchingReportsSerializer(matchingReports_obj).data
         output_data = createMatches(child)
         return Response(output_data)
+
+class ReceivedChildCreate(generics.CreateAPIView):
+    permission_classes = (IsAuthenticatedCustom, )
+    serializer_class = ReportSerializer
+
+    def post(self, request, format=None):
+        reportData = request.data
+        # reportData["reporter"] = request.user.id
+        serializer = self.serializer_class(data=reportData)
+        serializer.is_valid(raise_exception=True)
+        child = serializer.save()
+        if child:
+            thread = threading.Thread(target=sendMatchingNotificaitons, args=(child, request.user,))
+            thread.start()
+            
+            return Response(serializer.data)
+        else:
+            return Response({'message': 'Error Reporting Child'},status=status.HTTP_400_BAD_REQUEST)
 
 """
 class UpdateChildStatus(generics.UpdateAPIView):
@@ -392,29 +431,6 @@ class GetMatchedReports(APIView):
         return Response(matched_reports.data, status=status.HTTP_200_OK)
 
 
-class ReceivedChildList(APIView):
-    permission_classes = (IsAuthenticatedCustom, )
-
-    def get(self, request):
-
-        # Get all FoundChild reports with status="received"
-        found_reports = FoundChild.objects.filter(status='received')
-        found_serializer = ReportSerializer(found_repor, many=True)
-
-        return Response(found_serializer.data, status=status.HTTP_200_OK)
-    
-class FoundChildList(APIView):
-    permission_classes = (IsAuthenticatedCustom, )
-
-    def get(self, request):
-
-        # Get all FoundChild reports with status="received"
-        found_reports = FoundChild.objects.filter(status='received')
-        found_serializer = ReportSerializer(found_repor, many=True)
-
-        return Response(found_serializer.data, status=status.HTTP_200_OK)
-
-
 def image_view(request, child_id):
     
     child = get_object_or_404(Report, id=child_id)
@@ -482,6 +498,7 @@ class ReportsByUser(generics.ListAPIView):
         queryset = {
             "lost_reports": LostChild.objects.filter(reporter=user),
             "found_reports": FoundChild.objects.filter(reporter=user),
+            "received_reports": ReceivedChild.objects.filter(reporter=user)
         }
         return queryset
 
@@ -500,13 +517,12 @@ class UpdateChildStatus(generics.UpdateAPIView):
     permission_classes = (IsAuthenticatedCustom, )
 
     def patch(self, request, format=None):
-        # get id of the FoundChild or LostChild object
         report_id = request.data.get('report_id', None)
 
         if not report_id:
             return Response({'error': 'Object report_id not found'}, status=400)
         try:
-            found_report = FoundChild.objects.get(id=report_id)
+            found_report = Report.objects.get(id=report_id)
             # orgUser = User.objects.get(id=request.user.id)
             founder = found_report.reporter
             found_report.reporter = request.user

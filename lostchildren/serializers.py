@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LostChild, FoundChild, MatchingChild, Report
+from .models import LostChild, FoundChild, ReceivedChild,MatchingChild, Report, Status
 
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -10,7 +10,15 @@ class ReportSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Create the child object
-        child = super().create(validated_data)
+        status = validated_data.get("status", None) 
+        if status == Status.Lost:
+            child = LostChild.objects.create(**validated_data)
+        
+        if status == Status.Found:
+            child = FoundChild.objects.create(**validated_data)
+
+        if status == Status.Received:
+            child = ReceivedChild.objects.create(**validated_data)
         # Generate the face encodings for the child
         child.generate_face_encodings()
         # Save the child object

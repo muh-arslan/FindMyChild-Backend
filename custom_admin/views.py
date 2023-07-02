@@ -10,9 +10,6 @@ from django.db.models import Count
 from django.utils import timezone
 from django.db.models.functions import ExtractMonth
 from django.http import JsonResponse
-from rest_framework.permissions import DjangoModelPermissions
-from rest_framework import permissions
-from rest_framework.response import Response
 from django.contrib.auth.mixins import PermissionRequiredMixin
 # Create your views here.
 class LostChildList(PermissionRequiredCustom, generics.ListAPIView):
@@ -123,29 +120,30 @@ class AnalyticsData(generics.ListAPIView):
         received_reports_count = ReceivedChild.objects.count()
 
         # Calculate the count of Org users joined for each month of the current year
-        org_users_joined_count = User.objects.filter(created_at__year=current_year, user_type="orgUser").annotate(
+        org_users_joined_count = User.objects.filter(created_at__year=current_year, role=Role.AGENCY).annotate(
             month=ExtractMonth('created_at')
         ).values('month').annotate(count=Count('id')).order_by('month')
 
         # Calculate the count of App users joined for each month of the current year
-        app_users_joined_count = User.objects.filter(created_at__year=current_year, user_type="appUser").annotate(
+        app_users_joined_count = User.objects.filter(created_at__year=current_year, role=Role.APPUSER).annotate(
             month=ExtractMonth('created_at')
         ).values('month').annotate(count=Count('id')).order_by('month')
 
-        # # Calculate the count of lost reports created for each month of the current year
-        # lost_reports_created_count = LostChild.objects.filter(created_at__year=current_year).annotate(
-        #     month=ExtractMonth('created_at')
-        # ).values('month').annotate(count=Count('id')).order_by('month')
+        # Calculate the count of lost reports created for each month of the current year
+        lost_reports_created_count = LostChild.objects.filter(created_at__year=current_year).annotate(
+            month=ExtractMonth('created_at')
+        ).values('month').annotate(count=Count('id')).order_by('month')
 
-        # # Calculate the count of found reports created for each month of the current year
-        # found_reports_created_count = FoundChild.objects.filter(created_at__year=current_year, status="found").annotate(
-        #     month=ExtractMonth('created_at')
-        # ).values('month').annotate(count=Count('id')).order_by('month')
+        # Calculate the count of found reports created for each month of the current year
+        found_reports_created_count = FoundChild.objects.filter(created_at__year=current_year, status="found").annotate(
+            month=ExtractMonth('created_at')
+        ).values('month').annotate(count=Count('id')).order_by('month')
 
-        # # Calculate the count of received reports created for each month of the current year
-        # received_reports_created_count = LostChild.objects.filter(created_at__year=current_year, status="received").annotate(
-        #     month=ExtractMonth('created_at')
-        # ).values('month').annotate(count=Count('id')).order_by('month')
+        # Calculate the count of received reports created for each month of the current year
+        received_reports_created_count = ReceivedChild.objects.filter(created_at__year=current_year, status="received").annotate(
+            month=ExtractMonth('created_at')
+        ).values('month').annotate(count=Count('id')).order_by('month')
+        
         return {
             'org_users_count': org_users_count,
             'app_users_count': app_users_count,
@@ -155,9 +153,9 @@ class AnalyticsData(generics.ListAPIView):
 
             'org_users_joined_count': list(org_users_joined_count),
             'app_users_joined_count': list(app_users_joined_count),
-            # 'lost_reports_created_count': lost_reports_created_count,
-            # 'found_reports_created_count': found_reports_created_count,
-            # 'received_reports_created_count': received_reports_created_count,
+            'lost_reports_created_count': list(lost_reports_created_count),
+            'found_reports_created_count': list(found_reports_created_count),
+            'received_reports_created_count': list(received_reports_created_count),
         }
     
     def list(self, request, *args, **kwargs):
