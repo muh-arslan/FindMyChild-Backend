@@ -184,11 +184,11 @@ class ReceivedChildList(PermissionRequiredCustom, generics.ListAPIView):
 
 
 class LostChildCreate(generics.CreateAPIView):
-    # permission_classes = (IsAuthenticatedCustom, )
+    permission_classes = (IsAuthenticatedCustom, )
     serializer_class = ReportSerializer
 
     def post(self, request, format=None):
-        request.data['reporter'] = request.user
+        request.data['reporter'] = request.user.id
         reportData = request.data
         print(reportData)
         # reportData.pop("date")
@@ -252,7 +252,7 @@ class ReceivedChildCreate(generics.CreateAPIView):
     serializer_class = ReportSerializer
 
     def post(self, request, format=None):
-        request.data['reporter'] = request.user
+        request.data['reporter'] = request.user.id
         reportData = request.data
         # reportData["reporter"] = request.user.id
         serializer = self.serializer_class(data=reportData)
@@ -265,6 +265,19 @@ class ReceivedChildCreate(generics.CreateAPIView):
             return Response(serializer.data)
         else:
             return Response({'message': 'Error Reporting Child'},status=status.HTTP_400_BAD_REQUEST)
+
+class FoundChildCreate(generics.CreateAPIView):
+    permission_classes = (IsAuthenticatedCustom, )
+    serializer_class = ReportSerializer
+
+    def post(self, request, format=None):
+        request.data['reporter'] = request.user.id
+        reportData = request.data
+        # reportData["reporter"] = request.user.id
+        serializer = self.serializer_class(data=reportData)
+        serializer.is_valid(raise_exception=True)
+        child = serializer.save()
+        return Response(serializer.data)
 
 """
 class UpdateChildStatus(generics.UpdateAPIView):
