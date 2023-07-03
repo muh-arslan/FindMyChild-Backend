@@ -271,40 +271,42 @@ class ChangePasswordView(APIView):
 """
 
 
-class ListLoggedInUser(RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class ListLoggedInAppUser(RetrieveAPIView):
+    serializer_class = AppUserProfileSerializer
     permission_classes = (IsAuthenticatedCustom, )
 
     def get(self, request):
         try:
             # print (reset_password_token.user.email)
-            logged_user = User.objects.get(email=request.user.email)
-            if logged_user:
-                response = self.serializer_class(
-                    logged_user, context={"request": request}).data
+            try:
+                app_user = AppUserProfile.objects.get(user=request.user)
+            except:
+                app_user = AppUserProfile.objects.create(user=request.user)
+            if app_user:
+                response = self.serializer_class(app_user).data
+                print(response)
             return Response(response)
         except Exception as e:
-            return Response(e)
+            return print(e)
 
 
-# class ListLoggedInOrgUser(RetrieveAPIView):
-#     serializer_class = OrgDetailsSerializer
-#     permission_classes = (IsAuthenticatedCustom, )
+class ListLoggedInAgencyUser(RetrieveAPIView):
+    serializer_class = AgencyProfileSerializer
+    permission_classes = (IsAuthenticatedCustom, )
 
-#     def get(self, request):
-#         try:
-#             # print (reset_password_token.user.email)
-#             try:
-#                 org_user = OrgDetails.objects.get(user=request.user)
-#             except:
-#                 org_user = OrgDetails.objects.create(user=request.user)
-#             if org_user:
-#                 response = self.serializer_class(org_user).data
-#                 print(response)
-#             return Response(response)
-#         except Exception as e:
-#             return print(e)
+    def get(self, request):
+        try:
+            # print (reset_password_token.user.email)
+            try:
+                org_user = AgencyProfile.objects.get(user=request.user)
+            except:
+                org_user = AgencyProfile.objects.create(user=request.user)
+            if org_user:
+                response = self.serializer_class(org_user).data
+                print(response)
+            return Response(response)
+        except Exception as e:
+            return print(e)
 
 
 """
@@ -405,11 +407,11 @@ class UpdateLoggedInUser(UpdateAPIView):
 
 class AppUserUserListView(ListAPIView):
     queryset = User.objects.filter(role = Role.APPUSER)
-    serializer_class = UserSerializer
+    serializer_class = AppUserProfileSerializer
 
 class AgencyUserListView(ListAPIView):
-    queryset = User.objects.filter(role = Role.AGENCY)
-    serializer_class = UserSerializer
+    queryset = AgencyProfile.objects.filter(user__role=Role.AGENCY.value)
+    serializer_class = AgencyProfileSerializer
 
 
 # class ListAllUser(ListAPIView):
