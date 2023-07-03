@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import LostChildList, FoundChildList, ReceivedChildCreate, ReportUpdateAPIView, LostMatchedReports, GetMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, FoundChildCreate, LostChildren, FoundChildren, image_view
+from .views import LostChildList, FoundChildList, ReceivedChildCreate, ReportUpdateAPIView, LostMatchedReports, GetMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, FoundChildCreate, SearchView,LostChildren, FoundChildren, image_view
 
 # router = routers.DefaultRouter()
 # router.register(r'lost-children', LostChildren)
@@ -22,5 +22,6 @@ urlpatterns = [
      path('report/<uuid:pk>/', ReportUpdateAPIView.as_view(), name='lost_child_update_view'),
      path('change-status/', UpdateChildStatus.as_view(), name='update_child_status_view'),
      path('image/child/<uuid:child_id>/', image_view, name='found_child_image_view'),
+     path('search/<str:keyword>/', SearchView.as_view(), name='search_child' ),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
