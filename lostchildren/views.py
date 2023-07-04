@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from findmychild.custom_methods import IsAuthenticatedCustom, PermissionRequiredCustom
 from rest_framework.response import Response
-from .models import LostChild, FoundChild, MatchingChild, ReceivedChild, Report
+from .models import LostChild, FoundChild, MatchingChild, ReceivedChild, Report, Status
 from .serializers import ReportSerializer, MatchingChildSerializer
 from .face_recognizer import feature_extractor, match_results
 from django.forms.models import model_to_dict
@@ -546,7 +546,7 @@ class UpdateChildStatus(generics.UpdateAPIView):
             # orgUser = User.objects.get(id=request.user.id)
             founder = found_report.reporter
             found_report.reporter = request.user
-            found_report.status = 'received'
+            found_report.status = Status.Received
             found_report.save()
             child = found_report
             thread = threading.Thread(target=sendMatchingNotificaitons, args=(child, founder,))
