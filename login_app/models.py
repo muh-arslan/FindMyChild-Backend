@@ -42,10 +42,12 @@ class CustomUserManager(BaseUserManager):
 def user_profile_photo_path(instance, filename):
     return f'pictures/{instance.id}/{filename}'
 
+
 class Role(models.TextChoices):
-        ADMIN = "ADMIN", "Admin"
-        AGENCY = "AGENCY", "Agency"
-        APPUSER = "APPUSER", "AppUser"
+    ADMIN = "ADMIN", "Admin"
+    AGENCY = "AGENCY", "Agency"
+    APPUSER = "APPUSER", "AppUser"
+
 
 class User(AbstractUser):
 
@@ -53,7 +55,8 @@ class User(AbstractUser):
     role = models.CharField(max_length=50, choices=Role.choices)
     username = None
     email = models.EmailField(_('email address'), unique=True)
-    is_online = models.DateTimeField(default=timezone.now, null=True, blank=True)
+    is_online = models.DateTimeField(
+        default=timezone.now, null=True, blank=True)
     # Field to associate user with groups
     groups = models.ManyToManyField(Group, blank=True)
     online_status = models.BooleanField(default=False, null=True, blank=True)
@@ -70,35 +73,39 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
-    
+
     @property
     def is_authenticated(self):
         return True
-    
+
     def __str__(self):
         return self.email
+
 
 class AppUserProfile(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.OneToOneField(User,related_name= 'appUser', on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, related_name='appUser', on_delete=models.CASCADE)
     address = models.TextField(null=True, blank=True)
     phone_no = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
         return self.user.first_name
-    
+
     class Meta:
         verbose_name = 'AppUser'
         verbose_name_plural = 'AppUsers'
+
 
 class AgencyProfile(models.Model):
 
     provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
         'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.OneToOneField(User,related_name= 'agency', on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, related_name='agency', on_delete=models.CASCADE)
     address = models.TextField(null=True, blank=True)
     phone_no = models.CharField(max_length=20, null=True, blank=True)
     province = models.CharField(
@@ -109,13 +116,13 @@ class AgencyProfile(models.Model):
     website = models.URLField(max_length=200, blank=True, null=True)
     zip_code = models.CharField(max_length=20, blank=True, null=True)
     latitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True)
+        max_digits=32, decimal_places=15, blank=True, null=True)
     longitude = models.DecimalField(
-        max_digits=9, decimal_places=6, blank=True, null=True)
+        max_digits=32, decimal_places=15, blank=True, null=True)
 
     def __str__(self):
         return self.user.first_name
-    
+
     class Meta:
         verbose_name = 'Agency'
         verbose_name_plural = 'Agencies'
@@ -131,7 +138,6 @@ class AgencyProfile(models.Model):
 
 #     class Meta:
 #         ordering = ("created_at",)
-
 
 
 class Jwt(models.Model):

@@ -18,12 +18,13 @@ urlpatterns = [
 
     path('update-profile', UpdateLoggedInUser.as_view(),
          name='update_logged_in_user'),
-#     path('update-org-profile', UpdateLoggedInOrgUser.as_view(),
-#          name='update_logged_in_org_user'),
+    #     path('update-org-profile', UpdateLoggedInOrgUser.as_view(),
+    #          name='update_logged_in_org_user'),
 
-#     path('all-orgs', ListAllOrgUser.as_view(), name='all_org_user_data'),
+    #     path('all-orgs', ListAllOrgUser.as_view(), name='all_org_user_data'),
     path('all-app-users', AppUserUserListView.as_view(), name='all_app_user_data'),
-    path('all-agency-users', AgencyUserListView.as_view(), name='all_agency_user_data'),
+    path('all-agency-users', AgencyUserListView.as_view(),
+         name='all_agency_user_data'),
     path('unverified-orgs', UnverifiedOrgs.as_view(), name='unverified_orgs'),
     path('verify-org-user', VerifyOrgUser.as_view(), name='verify_org_user'),
     path('user/profile-photo/<uuid:user_id>/',
