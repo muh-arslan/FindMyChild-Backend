@@ -63,9 +63,11 @@ class Report(models.Model):
             if encoding is not None:
                 self.image_encoding = json.dumps(np.asarray(encoding).tolist())
 
-    def save(self, *args, **kwargs):
-        self.status = self.base_status
-        return super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.pk:
+    #         # self.status = self.base_status
+    #         print("maannnnnnn")
+    #         return super().save(*args, **kwargs)
     
     def __str__(self):
         return self.child_name

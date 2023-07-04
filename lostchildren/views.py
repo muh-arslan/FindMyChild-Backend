@@ -277,7 +277,7 @@ class FoundChildCreate(generics.CreateAPIView):
         # reportData["reporter"] = request.user.id
         serializer = self.serializer_class(data=reportData)
         serializer.is_valid(raise_exception=True)
-        child = serializer.save()
+        serializer.save()
         return Response(serializer.data)
 
 """
