@@ -562,20 +562,29 @@ class ReportUpdateAPIView(generics.UpdateAPIView):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = (IsAuthenticatedCustom, )
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
         old_img = instance.image
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        lostChild = serializer.save()
+        child = serializer.save()
         if(request.data.get("image")):
-            print(request.data)
-            lostChild.generate_face_encodings()            
             delete_child_image(old_img.path)
-
-
-        return Response(serializer.data)
+            child.generate_face_encodings()
+            child.save()
+            if (child.status == Status.Lost):
+                matching_children = MatchingChild.objects.filter(lost_child=child)
+                matching_children.delete()
+                output_data = createMatches(child)
+                print(output_data)
+                return Response({"message": "Matches Found", "matches": output_data})
+            if (child.status == Status.Received):
+                thread = threading.Thread(target=sendMatchingNotificaitons, args=(child, request.user,))
+                thread.start()
+        
+        return Response({"message": "Child Updated", "child": serializer.data})
 
 class SearchView(generics.RetrieveAPIView):
     queryset = Report.objects.all()

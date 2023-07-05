@@ -57,9 +57,11 @@ class Report(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def generate_face_encodings(self):
+        print("generating face encodings!")
         if self.image:
             image_path = self.image.path
             encoding = feature_extractor(image_path)
+            # print(encoding)
             if encoding is not None:
                 self.image_encoding = json.dumps(np.asarray(encoding).tolist())
 
