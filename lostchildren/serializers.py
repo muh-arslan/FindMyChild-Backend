@@ -48,7 +48,7 @@ class ReceivedChildrenSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_reporter(self, obj):
-        return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
+        return {"OrgName": obj.reporter.get_full_name(), "OrgId": obj.reporter.id}
     
 
 class MatchingChildSerializer(serializers.ModelSerializer):
