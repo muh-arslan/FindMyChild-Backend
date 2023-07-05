@@ -36,6 +36,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.http import FileResponse
 import threading
+from lostchildren.signals import delete_child_image
 # Create your views here.
 
 
@@ -334,12 +335,14 @@ class UpdateLoggedInUser(UpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         user_instance = request.user
-        print(request.data)
+        old_profile_picture = user_instance.profile_photo
+        # print(request.data)
         user_serializer = self.get_serializer(
             user_instance, data=request.data, partial=True)
         user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
-
+        if (request.data.get("profile_photo")):
+            delete_child_image(old_profile_picture.path)
         if user.role == Role.AGENCY:
             # Assuming a one-to-one relationship between User and Profile
             profile_instance = user.agency
