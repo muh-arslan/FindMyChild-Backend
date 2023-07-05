@@ -83,12 +83,17 @@ class User(AbstractUser):
 
 
 class AppUserProfile(models.Model):
+    provinces_choices = [('AJK', 'Azad Jammu and Kashmir'),    ('Bal', 'Balochistan'),    (
+        'GB', 'Gilgit Baltistan'),    ('KP', 'Khyber Pakhtunkhwa'),    ('Pun', 'Punjab'),    ('Snd', 'Sindh')]
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.OneToOneField(
         User, related_name='appUser', on_delete=models.CASCADE)
     address = models.TextField(null=True, blank=True)
     phone_no = models.CharField(max_length=20, null=True, blank=True)
+    province = models.CharField(
+        max_length=18, choices=provinces_choices, null=True, blank=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.user.first_name

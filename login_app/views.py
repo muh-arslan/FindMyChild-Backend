@@ -107,6 +107,7 @@ class RegisterUserView(CreateAPIView):
             phone_no = request.data['phone_no']
             # Generate a random 4-digit code and store it in the user's session
             self.code = random.randint(1000, 9999)
+            print("code", self.code)
             request.session['registration_code'] = self.code
             send_otp_via_email(email, self.code)
             request.session['registration_email'] = email
@@ -155,7 +156,8 @@ class RegisterUserView(CreateAPIView):
             if user.role == Role.AGENCY:
                 print("Agency User Yesssss")
                 AgencyProfile.objects.create(user=user)
-                thread = threading.Thread(target=sendSignUpNotificaiton, args= (user,))
+                thread = threading.Thread(
+                    target=sendSignUpNotificaiton, args=(user,))
                 thread.start()
                 # sendSignUpNotificaiton(user)
             request.session.flush()
@@ -232,7 +234,8 @@ class LoginView(APIView):
                     user_id=user.id, access=access, refresh=refresh
                 )
                 response = Response(data)
-                response.set_cookie('refresh_token', refresh, httponly=True, expires=datetime.now() + timedelta(days=30))
+                response.set_cookie('refresh_token', refresh, httponly=True,
+                                    expires=datetime.now() + timedelta(days=30))
                 return response
             return Exception("Password did not Matched")
         except Exception as e:
@@ -319,6 +322,7 @@ def user_profile_photo_view(request, user_id):
     file_path = user.profile_photo.path
     return FileResponse(open(file_path, 'rb'), content_type='image/jpeg')
 
+
 class UpdateLoggedInUser(UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -328,23 +332,27 @@ class UpdateLoggedInUser(UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         user_instance = request.user
         print(request.data)
-        user_serializer = self.get_serializer(user_instance, data=request.data, partial=True)
+        user_serializer = self.get_serializer(
+            user_instance, data=request.data, partial=True)
         user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
 
         if user.role == Role.AGENCY:
-            profile_instance = user.agency  # Assuming a one-to-one relationship between User and Profile
-            profile_serializer = AgencyProfileSerializer(profile_instance, data=request.data, partial=True)
+            # Assuming a one-to-one relationship between User and Profile
+            profile_instance = user.agency
+            profile_serializer = AgencyProfileSerializer(
+                profile_instance, data=request.data, partial=True)
             profile_serializer.is_valid(raise_exception=True)
             profile_serializer.save()
             print(user_serializer.data)
             return Response(user_serializer.data)
-        
-        profile_instance = user.appUser  # Assuming a one-to-one relationship between User and Profile
-        profile_serializer = AppUserProfileSerializer(profile_instance, data=request.data, partial=True)
+
+        # Assuming a one-to-one relationship between User and Profile
+        profile_instance = user.appUser
+        profile_serializer = AppUserProfileSerializer(
+            profile_instance, data=request.data, partial=True)
         profile_serializer.is_valid(raise_exception=True)
         profile_serializer.save()
-        
 
         return Response(user_serializer.data)
 
@@ -408,8 +416,9 @@ class UpdateLoggedInUser(UpdateAPIView):
 #             return Response(e)
 
 class AppUserUserListView(ListAPIView):
-    queryset = User.objects.filter(role = Role.APPUSER)
+    queryset = User.objects.filter(role=Role.APPUSER)
     serializer_class = AppUserProfileSerializer
+
 
 class AgencyUserListView(ListAPIView):
     queryset = AgencyProfile.objects.filter(user__role=Role.AGENCY.value)
