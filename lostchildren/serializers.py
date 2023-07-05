@@ -52,7 +52,7 @@ class ReceivedChildrenSerializer(serializers.ModelSerializer):
     
 
 class MatchingChildSerializer(serializers.ModelSerializer):
-    recieved_child = ReportSerializer()
+    recieved_child = ReceivedChildrenSerializer()
 
     class Meta:
         model = MatchingChild
