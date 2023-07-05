@@ -19,6 +19,7 @@ from notification_app.serializers import MatchNotificationSerializer, DropChildN
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import threading
+from .signals import delete_child_image
 
 def sendMatchingNotificaitons(child, founder):
     channel_layer = get_channel_layer()
@@ -564,12 +565,15 @@ class ReportUpdateAPIView(generics.UpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_img = instance.image
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         lostChild = serializer.save()
         if(request.data.get("image")):
             print(request.data)
-            lostChild.generate_face_encodings()
+            lostChild.generate_face_encodings()            
+            delete_child_image(old_img.path)
+
 
         return Response(serializer.data)
 

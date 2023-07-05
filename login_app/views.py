@@ -322,11 +322,12 @@ def user_profile_photo_view(request, user_id):
 class UpdateLoggedInUser(UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    # parser_classes = [MultiPartParser, FormParser]
     permission_classes = (IsAuthenticatedCustom, )
 
     def patch(self, request, *args, **kwargs):
         user_instance = request.user
+        print(request.data)
         user_serializer = self.get_serializer(user_instance, data=request.data, partial=True)
         user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
@@ -336,13 +337,14 @@ class UpdateLoggedInUser(UpdateAPIView):
             profile_serializer = AgencyProfileSerializer(profile_instance, data=request.data, partial=True)
             profile_serializer.is_valid(raise_exception=True)
             profile_serializer.save()
-
+            print(user_serializer.data)
             return Response(user_serializer.data)
         
         profile_instance = user.appUser  # Assuming a one-to-one relationship between User and Profile
         profile_serializer = AppUserProfileSerializer(profile_instance, data=request.data, partial=True)
         profile_serializer.is_valid(raise_exception=True)
         profile_serializer.save()
+        
 
         return Response(user_serializer.data)
 
@@ -412,41 +414,6 @@ class AppUserUserListView(ListAPIView):
 class AgencyUserListView(ListAPIView):
     queryset = AgencyProfile.objects.filter(user__role=Role.AGENCY.value)
     serializer_class = AgencyProfileSerializer
-
-
-# class ListAllUser(ListAPIView):
-#     serializer_class = UserSerializer
-#     permission_classes = (IsAuthenticatedCustom, )
-
-#     def get_queryset(self):
-#         queryset = User.objects.filter(role=Role.AGENCY)
-#         return queryset
-
-#     def list(self, request, *args, **kwargs):
-#         try:
-#             queryset = self.get_queryset()
-#             print(queryset)
-#             if queryset:
-#                 response = self.serializer_class(queryset, many=True).data
-#             return Response(response)
-#         except Exception as e:
-#             return Response(e)
-
-
-# class OrgUserDetails(APIView):
-#     serializer_class = OrgDetailsSerializer
-#     permission_classes = (IsAuthenticatedCustom, )
-
-#     def get(self, request, *args, **kwargs):
-#         org_user_id = kwargs.get("id")
-#         user = User.objects.get(id=org_user_id)
-#         queryset = OrgDetails.objects.get(user=user)
-#         try:
-#             if queryset:
-#                 response = self.serializer_class(queryset).data
-#             return Response(response)
-#         except Exception as e:
-#             return Response(e)
 
 
 class UnverifiedOrgs(ListAPIView):
