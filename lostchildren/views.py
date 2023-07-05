@@ -10,7 +10,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from findmychild.custom_methods import IsAuthenticatedCustom, PermissionRequiredCustom
 from rest_framework.response import Response
 from .models import LostChild, FoundChild, MatchingChild, ReceivedChild, Report, Status
-from .serializers import ReportSerializer, MatchingChildSerializer
+from .serializers import ReportSerializer, MatchingChildSerializer, ReceivedChildrenSerializer
 from .face_recognizer import feature_extractor, match_results
 from django.forms.models import model_to_dict
 from login_app.models import User, Role
@@ -182,7 +182,7 @@ class ReceivedChildList(PermissionRequiredCustom, generics.ListAPIView):
     permission_required = 'lostchildren.view_receivedchild'
 
     queryset = ReceivedChild.objects.all()
-    serializer_class = ReportSerializer
+    serializer_class = ReceivedChildrenSerializer
 
 
 class LostChildCreate(generics.CreateAPIView):
@@ -552,6 +552,26 @@ class UpdateChildStatus(generics.UpdateAPIView):
             child = found_report
             thread = threading.Thread(target=sendMatchingNotificaitons, args=(child, founder,))
             thread.start()
+            
+            return Response({'message': 'Child Status is successfuly updated'})
+        except Exception as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+
+class ResolveReportStatus(generics.UpdateAPIView):
+    serializer_class = ReportSerializer
+    permission_classes = (IsAuthenticatedCustom, )
+
+    def patch(self, request, format=None):
+        report_id = request.data.get('report_id', None)
+
+        if not report_id:
+            return Response({'error': 'Object report_id not found'}, status=404)
+        try:
+            lost_report = Report.objects.get(id=report_id)
+            # orgUser = User.objects.get(id=request.user.id)
+            matching_children = MatchingChild.objects.filter(lost_child=lost_report)
+            matching_children.delete()
+            lost_report.delete()
             
             return Response({'message': 'Child Status is successfuly updated'})
         except Exception as e:

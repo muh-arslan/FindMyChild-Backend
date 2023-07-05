@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from login_app.models import User
-from .models import DropChildNotification
-from .serializers import DropChildNotificationSerializer
+from .models import DropChildNotification, ResolveChildNotification
+from .serializers import DropChildNotificationSerializer, ResolveChildNotificationSerializer
 from chat_app.models import ChatRoom, Message
 from chat_app.serializers import ChatRoomSerializer, MessageSerializer
 from asgiref.sync import sync_to_async
@@ -71,6 +71,15 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                     "message": drop_notification,
                 },
             )
+        if message_type == "resolve_child_request":
+            drop_notification = await self.create_drop_child_notification(content)
+            print(drop_notification)
+            await self.channel_layer.group_send(
+                content["user_id"], {
+                    "type": "drop_child_request",
+                    "message": drop_notification,
+                },
+            )
         return super().receive_json(content, **kwargs)
     
     @database_sync_to_async
@@ -88,6 +97,15 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         try:
             drop_notification = DropChildNotification.objects.create(type= content["type"], description=content["description"],user_id = content["user_id"], found_child_id = content["found_child_id"]  )
             serialized_notification = DropChildNotificationSerializer(drop_notification).data
+            return serialized_notification
+        except Exception as e:
+            return Exception(e)
+    
+    @database_sync_to_async
+    def create_resolve_child_notification(self, content):
+        try:
+            resolve_notification = ResolveChildNotification.objects.create(type= content["type"], description=content["description"],user_id = content["user_id"], lost_child_id = content["lost_child_id"]  )
+            serialized_notification = ResolveChildNotificationSerializer(resolve_notification).data
             return serialized_notification
         except Exception as e:
             return Exception(e)

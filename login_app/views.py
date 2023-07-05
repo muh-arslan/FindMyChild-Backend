@@ -167,9 +167,10 @@ class RegisterUserView(CreateAPIView):
             return Response({"message": "Invalid password"})
 
 
-class ForgotPassword(CreateAPIView):
+class ForgotPassword(APIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    # parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
         data = request.data
@@ -184,15 +185,17 @@ class ForgotPassword(CreateAPIView):
         except ObjectDoesNotExist:
             return HttpResponseBadRequest("Email is not registered!")
 
-    def patch(self, request):
+    def patch(self, request, *args, **kwargs):
         code = request.session.get('registration_code')
         if code is None:
             request.session['code_status'] = False
+            print({"message": "No registration in progress"})
             return Response({"message": "No registration in progress"})
 
         received_code = request.data.get('code')
         if not received_code or str(received_code) != str(code):
             request.session['code_status'] = False
+            print({"message": "Invalid code"})
             return Response({"message": "Invalid code"})
 
         request.session['code_status'] = True

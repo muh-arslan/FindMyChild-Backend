@@ -40,14 +40,15 @@ class ReportSerializer(serializers.ModelSerializer):
 #     # def get_reporter(self, obj):
 #     #     return {"OrgName": obj.reporter.first_name, "OrgId": str(obj.reporter.id)}
 
-# class ReceivedChildrenSerializer(BaseChildSerializer):
-#     reporter = serializers.SerializerMethodField()
+class ReceivedChildrenSerializer(serializers.ModelSerializer):
+    reporter = serializers.SerializerMethodField()
     
-#     class Meta(BaseChildSerializer.Meta):
-#         model = FoundChild
+    class Meta:
+        model = ReceivedChild
+        fields = '__all__'
 
-#     def get_reporter(self, obj):
-#         return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
+    def get_reporter(self, obj):
+        return {"OrgName": obj.reporter.first_name, "OrgId": obj.reporter.id}
     
 
 class MatchingChildSerializer(serializers.ModelSerializer):
