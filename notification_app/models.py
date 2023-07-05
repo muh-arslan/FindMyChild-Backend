@@ -40,6 +40,17 @@ class DropChildNotification(Notification):
     def __str__(self):
         return self.type
 
+class ResolveChildNotification(Notification):
+    type = models.CharField(max_length=100, choices=[(
+        'resolve_child_request', 'Resolve Child Request'), ('resolve_child_success', 'Resolve Child Success')])
+    user = models.ForeignKey(
+        User, related_name="resolve_notification", on_delete=models.CASCADE)
+    description = models.TextField(blank=True, null=True)
+    lost_child = models.ForeignKey(
+        LostChild, on_delete=models.CASCADE, related_name="resolve_notification")
+
+    def __str__(self):
+        return self.type
 
 class OrgVerifyNotification(Notification):
     type = models.CharField(max_length=100, choices=[(
