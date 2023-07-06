@@ -605,10 +605,11 @@ class ResolveReportStatus(generics.UpdateAPIView):
 class ReportUpdateAPIView(generics.UpdateAPIView):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    # parser_classes = [MultiPartParser, FormParser]
     permission_classes = (IsAuthenticatedCustom, )
 
     def patch(self, request, *args, **kwargs):
+        print(request.data)
         instance = self.get_object()
         old_img = instance.image
         serializer = self.get_serializer(
@@ -632,6 +633,19 @@ class ReportUpdateAPIView(generics.UpdateAPIView):
                 thread.start()
 
         return Response({"message": "Child Updated", "child": serializer.data})
+
+class GetSingleChildView(generics.RetrieveAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+
+    def get(self, request, *args, **kwargs):
+        child_id = kwargs.get('id')
+        try:
+            child = Report.objects.get(id = child_id)
+            serializer = self.serializer_class(child)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SearchView(generics.RetrieveAPIView):
