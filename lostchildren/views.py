@@ -584,20 +584,28 @@ class ResolveReportStatus(generics.UpdateAPIView):
     serializer_class = ReportSerializer
     permission_classes = (IsAuthenticatedCustom, )
 
-    def patch(self, request, format=None):
-        report_id = request.data.get('report_id', None)
+    def patch(self, request, *args, **kwargs):
+        report_id = kwargs.get('id')
 
         if not report_id:
             return Response({'error': 'Object report_id not found'}, status=404)
         try:
-            lost_report = Report.objects.get(id=report_id)
-            # orgUser = User.objects.get(id=request.user.id)
-            matching_children = MatchingChild.objects.filter(
-                lost_child=lost_report)
-            matching_children.delete()
-            lost_report.delete()
+            report = Report.objects.get(id=report_id)
+            if(report.status == Status.Lost):
+                # orgUser = User.objects.get(id=request.user.id)
+                matching_children = MatchingChild.objects.filter(
+                    lost_child=report)
+                matching_children.delete()
+            if(report.status == Status.Received):
+                # orgUser = User.objects.get(id=request.user.id)
+                matching_children = MatchingChild.objects.filter(
+                    recieved_child=report)
+                matching_children.delete()
+            report.status = Status.Resolved
+            report.save()
+            serializer = self.serializer_class(report)
 
-            return Response({'message': 'Child Status is successfuly updated'})
+            return Response({'message': 'Child Status is successfuly updated', 'child':serializer.data },status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 

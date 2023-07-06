@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import GetSingleChildView, DeleteChildView, LostChildList, FoundChildList, ReceivedChildCreate, ReportUpdateAPIView, LostMatchedReports, GetMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, FoundChildCreate, SearchView, LostChildren, FoundChildren, image_view
+from .views import ResolveReportStatus,GetSingleChildView, DeleteChildView, LostChildList, FoundChildList, ReceivedChildCreate, ReportUpdateAPIView, LostMatchedReports, GetMatchedReports, ReceivedChildList, ReportsByUser, UpdateChildStatus, LostChildCreate, FoundChildCreate, SearchView, LostChildren, FoundChildren, image_view
 
 # router = routers.DefaultRouter()
 # router.register(r'lost-children', LostChildren)
@@ -32,6 +32,7 @@ urlpatterns = [
     path('report-delete/<uuid:pk>/',
          DeleteChildView.as_view(), name='delete_child'),
     path('search/<str:keyword>/', SearchView.as_view(), name='search_child'),
-    path('child/<uuid:id>/', GetSingleChildView.as_view(), name="single_child_view" )
+    path('child/<uuid:id>/', GetSingleChildView.as_view(), name="single_child_view" ),
+    path('resolve-child/<uuid:id>/', ResolveReportStatus.as_view(), name='resolve_child')
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
