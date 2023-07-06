@@ -422,7 +422,7 @@ class UpdateLoggedInUser(UpdateAPIView):
 #             return Response(e)
 
 class AppUserUserListView(ListAPIView):
-    queryset = User.objects.filter(role=Role.APPUSER)
+    queryset = AppUserProfile.objects.filter(user__role=Role.APPUSER.value)
     serializer_class = AppUserProfileSerializer
 
 

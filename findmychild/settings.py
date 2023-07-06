@@ -127,22 +127,22 @@ DATABASES = {
     #     'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
     #     'PORT': '5432',
     # }
-    "default": {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'test_db',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
-    }
     # "default": {
     #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'fyp_local',
+    #     'NAME': 'test_db',
     #     'USER': 'postgres',
-    #     'PASSWORD': '127586',
+    #     'PASSWORD': '1234',
     #     'HOST': '127.0.0.1',
     #     'PORT': '5432',
     # }
+    "default": {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'findmychild_db',
+        'USER': 'postgres',
+        'PASSWORD': '127586',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
 }
 
 
