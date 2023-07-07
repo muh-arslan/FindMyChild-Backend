@@ -119,27 +119,11 @@ CHANNEL_LAYERS = {
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    # "default": {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'fyp_db',
-    #     'USER': 'arslan',
-    #     'PASSWORD': 'finalyearproject',
-    #     'HOST': 'findmychild-database.czbk1ire2ktv.us-east-1.rds.amazonaws.com',
-    #     'PORT': '5432',
-    # }
-    # "default": {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'test_db',
-    #     'USER': 'postgres',
-    #     'PASSWORD': '1234',
-    #     'HOST': '127.0.0.1',
-    #     'PORT': '5432',
-    # }
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'findmychild_db',
         'USER': 'postgres',
-        'PASSWORD': '127586',
+        'PASSWORD': '123456',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }

@@ -6,6 +6,11 @@ The Final Year Project - We Find Lost Children Using Facial Recognition
 
 Create Python Environment based on ./dlib-19.22.99-cp310-cp310-win_amd64.whl file.
 
+# DATABASE Connection
+
+PostgreSQL database connection details should be added in ./findmychild/settings.py
+reference : line 121
+
 # Requirements of the Project
 
 pip install -r requirements.txt
