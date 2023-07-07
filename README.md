@@ -17,7 +17,7 @@ pip install -r requirements.txt
 
 # Start Project
 
-py manage.py runserver 127.0.0.1 (replace with your device ip address)
+py manage.py runserver 127.0.0.1:8000 (replace with your device ip address)
 
 # Redis CLI Connection
 
